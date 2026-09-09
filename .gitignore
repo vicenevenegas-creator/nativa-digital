@@ -1,0 +1,17 @@
+# Node / React
+node_modules/
+dist/
+dist-ssr/
+*.local
+
+# Editor / Antigravity scratch
+.vscode/
+.idea/
+*.suo
+*.user
+*.userosql
+*.sln.docstates
+
+# System files
+.DS_Store
+Thumbs.db
