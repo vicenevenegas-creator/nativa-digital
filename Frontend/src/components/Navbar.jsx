@@ -34,6 +34,17 @@ export default function Navbar({ currentTab, setCurrentTab, userIdentity, onChan
                   Catálogo de Sellos
                 </a>
               </li>
+              {userIdentity.role === 'public' && (
+                <li>
+                  <a 
+                    href="#mis-consultas" 
+                    className={`nav-link ${currentTab === 'mis-consultas' ? 'active' : ''}`}
+                    onClick={(e) => { e.preventDefault(); setCurrentTab('mis-consultas'); }}
+                  >
+                    📋 Mis Consultas Guardadas
+                  </a>
+                </li>
+              )}
               {userIdentity.role === 'empresa' && (
                 <li>
                   <a 

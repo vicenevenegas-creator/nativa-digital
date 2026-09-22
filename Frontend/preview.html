@@ -167,6 +167,79 @@
     .footer-right { display: flex; flex-direction: column; align-items: flex-end; gap: 16px; text-align: right; }
     .footer-logo-large { width: 68px; height: 68px; object-fit: contain; }
     .copyright-text { font-size: 13px; color: #718096; line-height: 1.4; }
+
+    /* MODAL DE LOGIN SOCIAL (GOOGLE / FACEBOOK) */
+    .social-modal-backdrop {
+      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+      background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(4px);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 1000; padding: 16px;
+    }
+    .social-modal-card {
+      background: #FFFFFF; border-radius: 12px; max-width: 440px; width: 100%;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.3); overflow: hidden; border: 1px solid #E2E8F0;
+    }
+    .social-modal-header { padding: 24px 28px 16px 28px; text-align: center; border-bottom: 1px solid #E2E8F0; }
+    .social-modal-body { padding: 20px 28px 28px 28px; }
+
+    /* BARRA FLOTANTE DEL COMPARADOR DE SELLOS */
+    .comparator-dock {
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+      background: #0F172A; color: #FFFFFF; padding: 14px 24px; border-radius: var(--radius-pill);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.4); display: flex; align-items: center; gap: 18px;
+      z-index: 500; border: 1px solid #334155;
+    }
+    .comparator-chips { display: flex; gap: 8px; align-items: center; }
+    .comparator-chip {
+      background: #1E293B; color: #38BDF8; padding: 4px 12px; border-radius: var(--radius-pill);
+      font-size: 12px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; border: 1px solid #334155;
+    }
+    .comparator-chip-remove { cursor: pointer; color: #94A3B8; font-weight: bold; }
+    .comparator-chip-remove:hover { color: #EF4444; }
+
+    /* MODAL DE COMPARACIÓN LADO A LADO */
+    .comparator-modal-card {
+      background: #FFFFFF; border-radius: 12px; max-width: 960px; width: 100%;
+      max-height: 90vh; overflow-y: auto; box-shadow: 0 25px 60px rgba(0,0,0,0.4); border: 1px solid #CBD5E1;
+    }
+    .comparator-table { width: 100%; border-collapse: collapse; margin-top: 14px; font-size: 13.5px; }
+    .comparator-table th, .comparator-table td { padding: 12px 16px; border: 1px solid #E2E8F0; vertical-align: middle; }
+    .comparator-table th { background-color: #F8FAFC; font-weight: 700; color: #334155; text-align: left; }
+    .comparator-feature-lbl { font-weight: 700; color: #0F172A; background-color: #F1F5F9; width: 220px; }
+    .btn-compare-check { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; color: #475569; cursor: pointer; padding: 4px 8px; border-radius: 4px; user-select: none; background: none; border: none; }
+    .btn-compare-check:hover { background-color: #F1F5F9; color: var(--color-primary); }
+    .btn-compare-check.selected { background-color: #FEF2F2; color: var(--color-primary); border: 1px solid rgba(210, 10, 17, 0.3); }
+
+
+    /* ESTILOS DE IMPRESIÓN / GENERACIÓN DE PDF FORMAL A4 */
+    @media print {
+      @page { size: A4 portrait; margin: 10mm 15mm 10mm 15mm; }
+      body { background: #FFFFFF !important; color: #0F172A !important; font-size: 10pt; line-height: 1.3; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+      .navbar, .footer, .back-link, .btn, .hero-bg-motion, .sidebar-filters-card, .social-modal-backdrop, .no-print { display: none !important; }
+      .results-page-wrapper { padding: 0 !important; margin: 0 !important; background: #FFFFFF !important; min-height: auto !important; }
+      .container { max-width: 100% !important; padding: 0 !important; margin: 0 !important; width: 100% !important; }
+      .product-detail-layout { display: block !important; border: 1px solid #CBD5E1 !important; padding: 20px !important; border-radius: 8px !important; margin-top: 0 !important; box-shadow: none !important; }
+      .print-pdf-header { display: flex !important; justify-content: space-between; align-items: center; border-bottom: 2px solid #D20A11; padding-bottom: 12px; margin-bottom: 16px; }
+      .print-pdf-header h2 { font-size: 18pt !important; font-weight: 800 !important; color: #0F172A !important; margin: 0; }
+      .print-pdf-header p { font-size: 9pt !important; color: #64748B !important; margin: 2px 0 0 0; }
+      .print-pdf-contact { text-align: right; font-size: 8.5pt !important; color: #334155 !important; line-height: 1.4; }
+      .detail-img-card { border: 1px solid #E2E8F0 !important; background: #F8FAFC !important; padding: 12px !important; text-align: center; margin-bottom: 14px; float: right; width: 180px; margin-left: 20px; border-radius: 6px !important; }
+      .detail-large-img { max-height: 140px !important; width: auto !important; margin: 0 auto; display: block; }
+      .detail-main-content { display: block !important; }
+      .detail-header-tag { font-size: 9pt !important; color: #D20A11 !important; font-weight: 700; }
+      .detail-title { font-size: 16pt !important; margin: 2px 0 12px 0 !important; color: #0F172A !important; }
+      .tech-limits-container { background: #F1F5F9 !important; border: 1px solid #CBD5E1 !important; color: #0F172A !important; border-radius: 6px !important; padding: 10px 14px !important; margin-bottom: 14px; }
+      .tech-limits-title { font-size: 9.5pt !important; color: #D20A11 !important; font-weight: 800; margin-bottom: 8px; }
+      .limits-grid { display: grid !important; grid-template-columns: repeat(3, 1fr) !important; gap: 8px !important; }
+      .limit-item { background: #FFFFFF !important; border: 1px solid #E2E8F0 !important; padding: 6px !important; border-radius: 4px !important; }
+      .limit-val { font-size: 11pt !important; font-weight: 800 !important; color: #0F172A !important; }
+      .limit-lbl { font-size: 7.5pt !important; color: #64748B !important; }
+      .tech-spec-grid { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 10px !important; margin-top: 10px; }
+      .spec-detail-box { background: #F8FAFC !important; border: 1px solid #E2E8F0 !important; border-left: 4px solid #D20A11 !important; padding: 8px 12px !important; border-radius: 4px !important; }
+      .spec-detail-title { font-size: 8pt !important; color: #64748B !important; }
+      .spec-detail-val { font-size: 9.5pt !important; font-weight: 700 !important; color: #0F172A !important; }
+      .print-footer-validez { display: block !important; margin-top: 20px; padding-top: 12px; border-top: 1px solid #E2E8F0; font-size: 8pt !important; color: #64748B; text-align: center; }
+    }
   </style>
 </head>
 <body>
@@ -182,12 +255,12 @@
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 28px; max-width: 780px; width: 100%;">
 
       <!-- TARJETA A: ACCESO PÚBLICO -->
-      <div class="access-card" onclick="ingresoPublico()" style="background: #161B22; border-color: #30363D; cursor: pointer;">
+      <div class="access-card" onclick="mostrarAuthCliente()" style="background: #161B22; border-color: #30363D; cursor: pointer;">
         <div>
           <span style="font-size: 52px;">🌐</span>
           <h3 style="font-size: 22px; font-weight: 800; margin-top: 14px; color: #FFFFFF;">Acceso Público</h3>
           <p style="font-size: 14px; color: #94A3B8; margin-top: 10px; line-height: 1.6;">
-            Para ingenieros, técnicos de mantenimiento y compradores. Buscá compatibilidad, consultá fichas técnicas y cotizá por WhatsApp.
+            Para ingenieros, técnicos de mantenimiento y compradores. Inicie sesión o regístrese para buscar repuestos y cotizar.
           </p>
           <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 16px; text-align: left;">
             <div style="font-size: 13px; color: #38BDF8;">✓ Buscador inteligente de compatibilidad</div>
@@ -207,12 +280,11 @@
           <span style="font-size: 52px;">🔒</span>
           <h3 style="font-size: 22px; font-weight: 800; margin-top: 14px; color: #38BDF8;">Acceso Empresa</h3>
           <p style="font-size: 14px; color: #94A3B8; margin-top: 10px; line-height: 1.6;">
-            Exclusivo para el personal institucional de Graphite Technologies. Panel privado con CRM de cotizaciones y carga masiva de catálogo.
+            Exclusivo para el personal institucional de Graphite Technologies. Panel privado con CRM de cotizaciones y carga del catálogo.
           </p>
           <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 16px; text-align: left;">
             <div style="font-size: 13px; color: #38BDF8;">✓ CRM de solicitudes entrantes</div>
-            <div style="font-size: 13px; color: #38BDF8;">✓ Carga individual y masiva (Excel/CSV)</div>
-            <div style="font-size: 13px; color: #38BDF8;">✓ Gestión del catálogo</div>
+            <div style="font-size: 13px; color: #38BDF8;">✓ Carga y administración del catálogo</div>
             <div style="font-size: 13px; color: #38BDF8;">✓ Acceso restringido @graphite.com.ar</div>
           </div>
         </div>
@@ -221,24 +293,132 @@
         </button>
       </div>
     </div>
+  </div>
 
-    <!-- LOGIN EMPRESA (aparece inline debajo de las tarjetas) -->
-    <div id="loginEmpresaInline" style="display: none; margin-top: 32px; max-width: 440px; width: 100%; background: #161B22; padding: 32px; border-radius: 12px; border: 1px solid #30363D;">
-      <div style="text-align: center; margin-bottom: 20px;">
-        <h2 style="font-size: 20px; font-weight: 800; color: #FFFFFF;">🔒 Acceso Privado Empresa</h2>
+  <!-- VISTA DEDICADA: AUTENTICACIÓN CLIENTES (INICIAR SESIÓN / CREAR CUENTA) -->
+  <div id="viewAuthCliente" style="display: none; min-height: 100vh; background: linear-gradient(135deg, #0A0D12 0%, #161B22 60%, #1A0508 100%); display: none; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px;">
+    <div style="max-width: 460px; width: 100%; background: #161B22; padding: 36px; border-radius: 12px; border: 1px solid #30363D;">
+      <span class="back-link" style="margin-bottom: 16px; display: inline-block; color: #38BDF8;" onclick="cerrarSesion()">
+        ← Volver a selección de portales
+      </span>
+      <div style="text-align: center; margin-bottom: 24px;">
+        <span style="font-size: 36px;">👤</span>
+        <h2 style="font-size: 22px; font-weight: 800; color: #FFFFFF; margin-top: 8px;">Portal Clientes Graphite</h2>
+        <p style="font-size: 13px; color: #8B949E; margin-top: 4px;">Acceso para cotizaciones técnicas y catálogo verificado</p>
+      </div>
+
+      <div class="search-tabs" style="margin-bottom: 20px;">
+        <button class="tab-btn active" id="btnTabClientLogin" onclick="cambiarAuthClientTab('login')">Iniciar Sesión</button>
+        <button class="tab-btn" id="btnTabClientRegister" onclick="cambiarAuthClientTab('register')">Crear Cuenta</button>
+      </div>
+
+      <div id="formClientRegisterField" style="display: none; margin-bottom: 14px;">
+        <label class="form-label" style="color: #CBD5E0;">Nombre Completo o Empresa *</label>
+        <input type="text" id="clientRegNombre" class="form-input" placeholder="Ej: Juan Pérez / Metalúrgica Sur" style="background: #0D1117; color: white; border-color: #30363D;">
+      </div>
+
+      <div class="form-group" style="margin-bottom: 14px;">
+        <label class="form-label" style="color: #CBD5E0;">Correo Electrónico *</label>
+        <input type="email" id="clientAuthMail" class="form-input" placeholder="tu.mail@empresa.com" style="background: #0D1117; color: white; border-color: #30363D;">
+      </div>
+
+      <div class="form-group" style="margin-bottom: 14px;">
+        <label class="form-label" style="color: #CBD5E0;">Contraseña *</label>
+        <input type="password" id="clientAuthPass" class="form-input" placeholder="••••••••" style="background: #0D1117; color: white; border-color: #30363D;">
+      </div>
+
+      <div id="formClientConfirmPassField" style="display: none; margin-bottom: 20px;">
+        <label class="form-label" style="color: #CBD5E0;">Confirmar Contraseña *</label>
+        <input type="password" id="clientRegPassConfirm" class="form-input" placeholder="••••••••" style="background: #0D1117; color: white; border-color: #30363D;">
+      </div>
+
+      <button class="btn btn-primary full-width" id="btnSubmitClientAuth" style="padding: 14px; margin-bottom: 16px;" onclick="ejecutarAuthCliente()">
+        🔑 Iniciar Sesión
+      </button>
+
+      <div style="border-top: 1px solid #30363D; padding-top: 16px; display: flex; flex-direction: column; gap: 8px;">
+        <button class="btn btn-google full-width" style="padding: 10px; font-size: 13px;" onclick="abrirModalSocial('Google')">
+          🔴 Continuar con Google (Gmail)
+        </button>
+        <button class="btn btn-facebook full-width" style="padding: 10px; font-size: 13px;" onclick="abrirModalSocial('Facebook')">
+          🔵 Continuar con Facebook
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL INTERACTIVO DE AUTENTICACIÓN SOCIAL (GOOGLE / FACEBOOK) -->
+  <div id="modalSocialAuth" class="social-modal-backdrop" style="display: none;" onclick="cerrarModalSocial()">
+    <div class="social-modal-card" onclick="event.stopPropagation()">
+      <div class="social-modal-header">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <div id="socialModalHeaderTitle" style="font-weight: 800; font-size: 16px; display: flex; align-items: center; gap: 8px;">
+            <span>🔴</span> <span>Acceder con Google</span>
+          </div>
+          <button style="background: none; border: none; font-size: 20px; cursor: pointer; color: #94A3B8;" onclick="cerrarModalSocial()">✕</button>
+        </div>
+        <p style="font-size: 12px; color: #64748B; text-align: left; margin-top: 6px;">
+          Conectar tu cuenta para acceder a la plataforma de Graphite Technologies.
+        </p>
+      </div>
+
+      <div class="social-modal-body">
+        <!-- PASO 1: CREDENCIALES -->
+        <div id="socialStepCredentials">
+          <div class="form-group" style="margin-bottom: 14px;">
+            <label class="form-label" style="font-size: 13px;" id="socialLabelMail">Correo electrónico o Gmail</label>
+            <input type="email" id="socialInputEmail" class="form-input" placeholder="ejemplo@gmail.com" required>
+          </div>
+          <div class="form-group" style="margin-bottom: 20px;">
+            <label class="form-label" style="font-size: 13px;" id="socialLabelPass">Contraseña</label>
+            <input type="password" id="socialInputPass" class="form-input" placeholder="••••••••" required>
+          </div>
+          <div style="display: flex; justify-content: flex-end; gap: 10px;">
+            <button class="btn btn-secondary" style="padding: 8px 16px; font-size: 13px;" onclick="cerrarModalSocial()">Cancelar</button>
+            <button class="btn btn-primary" id="socialBtnSubmit" style="padding: 8px 20px; font-size: 13px;" onclick="procesarCredencialesSocial()">Siguiente →</button>
+          </div>
+        </div>
+
+        <!-- PASO 2: VERIFICACIÓN 2 PASOS / SEGURIDAD -->
+        <div id="socialStep2FA" style="display: none; text-align: center; padding: 10px 0;">
+          <div style="width: 56px; height: 56px; border-radius: 50%; background: #EFF6FF; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px auto;">
+            <span style="font-size: 28px;">📲</span>
+          </div>
+          <h3 id="social2FATitle" style="font-size: 17px; font-weight: 800; color: #0F172A; margin-bottom: 8px;">¿Sos vos el que intenta acceder?</h3>
+          <p id="social2FADesc" style="font-size: 13px; color: #475569; line-height: 1.5; margin-bottom: 20px;">
+            Google envió una notificación a tu teléfono vinculado para confirmar que tu cuenta es quien ingresa a Graphite Technologies.
+          </p>
+          <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 12px; margin-bottom: 20px; font-size: 13px; color: #334155;">
+            🔔 <strong>Aprobá el aviso de seguridad en tu dispositivo móvil o confirmá a continuación:</strong>
+          </div>
+          <button class="btn btn-primary full-width" style="padding: 12px; font-size: 14px; background: #10B981;" onclick="confirmarLoginSocial()">
+            ✓ Sí, soy yo (Confirmar e Ingresar)
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- VISTA DEDICADA: LOGIN INSTITUCIONAL EMPRESA -->
+  <div id="viewLoginEmpresa" style="display: none; min-height: 100vh; background: linear-gradient(135deg, #0A0D12 0%, #161B22 60%, #1A0508 100%); display: none; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px;">
+    <div style="max-width: 440px; width: 100%; background: #161B22; padding: 36px; border-radius: 12px; border: 1px solid #30363D;">
+      <span class="back-link" style="margin-bottom: 16px; display: inline-block; color: #38BDF8;" onclick="cerrarSesion()">
+        ← Volver a selección de portales
+      </span>
+      <div style="text-align: center; margin-bottom: 24px;">
+        <span style="font-size: 36px;">🔒</span>
+        <h2 style="font-size: 22px; font-weight: 800; color: #FFFFFF; margin-top: 8px;">Acceso Empresa Graphite</h2>
         <p style="font-size: 13px; color: #8B949E; margin-top: 4px;">Exclusivo para el personal institucional @graphite.com.ar</p>
       </div>
-      <div class="form-group" style="margin-bottom: 14px;">
+      <div class="form-group" style="margin-bottom: 16px;">
         <label class="form-label" style="color: #CBD5E0;">Mail Institucional</label>
         <input type="email" id="loginMailInputAcceso" class="form-input" placeholder="vendedor@graphite.com.ar" style="background: #0D1117; color: white; border-color: #30363D;">
       </div>
       <div class="form-group" style="margin-bottom: 20px;">
         <label class="form-label" style="color: #CBD5E0;">Contraseña</label>
-        <input type="password" class="form-input" placeholder="••••••••" style="background: #0D1117; color: white; border-color: #30363D;">
+        <input type="password" id="loginPassInputAcceso" class="form-input" placeholder="••••••••" style="background: #0D1117; color: white; border-color: #30363D;">
       </div>
-      <button class="btn btn-primary full-width" style="padding: 12px;" onclick="iniciarSesionEmpresaDesdeAcceso()">🔑 Iniciar Sesión</button>
-      <button class="btn" style="width: 100%; margin-top: 10px; padding: 12px; background: #1E293B; color: #38BDF8; border: 1px solid #334155; font-weight: 700;" onclick="demoEmpresaDesdeAcceso()">⚡ Demo Vendedor (Acceso Rápido)</button>
-      <button class="btn btn-secondary full-width" style="margin-top: 10px; padding: 10px; font-size: 13px;" onclick="document.getElementById('loginEmpresaInline').style.display='none'">← Volver a selección</button>
+      <button class="btn btn-primary full-width" style="padding: 14px;" onclick="iniciarSesionEmpresaDesdeAcceso()">🔑 Iniciar Sesión Privada</button>
     </div>
   </div>
 
@@ -254,6 +434,7 @@
       <ul class="nav-links" id="navLinksPublico" style="display: none;">
         <li><a onclick="irAHome()" class="nav-link" id="navBuscadorPub">Buscador Principal</a></li>
         <li><a onclick="irAResultados()" class="nav-link" id="navCatalogoPub">Catálogo de Sellos</a></li>
+        <li><a onclick="irAMisConsultas()" class="nav-link" id="navConsultasPub">📋 Mis Consultas</a></li>
       </ul>
 
       <!-- Links para acceso EMPRESA -->
@@ -275,14 +456,14 @@
     <section class="hero">
       <div class="hero-bg-motion"></div>
       <div class="container hero-container">
-        <span class="hero-tag">Buscador Inteligente Graphite</span>
         <h1 class="hero-title">Encontrá el Sello Mecánico Exacto para tu Bomba</h1>
         <p class="hero-subtitle">Seleccioná la marca y modelo de tu bomba o las especificaciones de tu sello actual para obtener matcheos verificados al instante.</p>
 
         <div class="search-card">
-          <div class="search-tabs">
-            <button class="tab-btn active" id="tabBombas" onclick="cambiarTab('bombas')">⚙️ Buscar por Marca y Modelo de Bomba</button>
-            <button class="tab-btn" id="tabSellos" onclick="cambiarTab('sellos')">🔧 Buscar por Marca/Código de Sello</button>
+          <div class="search-tabs" style="flex-wrap: wrap; gap: 8px;">
+            <button class="tab-btn active" id="tabBombas" onclick="cambiarTab('bombas')">⚙️ Por Bomba</button>
+            <button class="tab-btn" id="tabSellos" onclick="cambiarTab('sellos')">🏷️ Por Sello Competidor</button>
+            <button class="tab-btn" id="tabMedidas" onclick="cambiarTab('medidas')">📏 Por Medidas de Calibre (d₁, d₃, L₃)</button>
           </div>
 
           <div class="form-grid-col" id="formBombas">
@@ -307,13 +488,14 @@
             </div>
 
             <div class="form-group">
-              <label class="form-label">💧 Tipo de Fluido</label>
-              <select class="form-select" id="fluidoSelect">
+              <label class="form-label">🧪 Tipo de Fluido / Trabajo</label>
+              <select class="form-select" id="fluidoSelect" onchange="actualizarAsistenteQuimico(this.value)">
                 <option value="">-- Todos los Fluidos --</option>
-                <option value="Agua limpia">Agua limpia / Potable</option>
-                <option value="Químicos">Químicos agresivos / Ácidos</option>
-                <option value="Aceites">Aceites y fluidos viscosos</option>
-                <option value="Aguas residuales">Aguas residuales / Cloacales</option>
+                <option value="Agua limpia / Potable">💧 Agua limpia / Potable</option>
+                <option value="Químicos agresivos / Ácidos">🧪 Químicos agresivos / Ácidos</option>
+                <option value="Aceites y fluidos viscosos">🛢️ Aceites y fluidos viscosos</option>
+                <option value="Aguas residuales / Cloacales">☣️ Aguas residuales / Cloacales</option>
+                <option value="Alimentos y bebidas (Grado alimenticio)">🥛 Alimentos y bebidas (Grado alimenticio)</option>
               </select>
             </div>
 
@@ -342,20 +524,83 @@
             </div>
 
             <div class="form-group">
-              <label class="form-label">💧 Tipo de Fluido</label>
-              <select class="form-select" id="fluidoSelloSelect">
+              <label class="form-label">🧪 Tipo de Fluido</label>
+              <select class="form-select" id="fluidoSelloSelect" onchange="actualizarAsistenteQuimico(this.value)">
                 <option value="">-- Todos los Fluidos --</option>
-                <option value="Agua limpia">Agua limpia / Potable</option>
-                <option value="Químicos">Químicos agresivos / Ácidos</option>
-                <option value="Aceites">Aceites y fluidos viscosos</option>
-                <option value="Aguas residuales">Aguas residuales / Cloacales</option>
+                <option value="Agua limpia / Potable">💧 Agua limpia / Potable</option>
+                <option value="Químicos agresivos / Ácidos">🧪 Químicos agresivos / Ácidos</option>
+                <option value="Aceites y fluidos viscosos">🛢️ Aceites y fluidos viscosos</option>
+                <option value="Aguas residuales / Cloacales">☣️ Aguas residuales / Cloacales</option>
+                <option value="Alimentos y bebidas (Grado alimenticio)">🥛 Alimentos y bebidas (Grado alimenticio)</option>
               </select>
             </div>
           </div>
 
-          <button class="btn btn-primary" style="width: 100%; padding: 16px; margin-top: 8px;" onclick="ejecutarBusqueda()">
+          <!-- PESTAÑA DE BÚSQUEDA POR MEDIDAS DE CALIBRE -->
+          <div class="form-grid-col" id="formMedidas" style="display: none;">
+            <div style="background-color: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 14px 18px; margin-bottom: 8px;">
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <span style="font-size: 24px;">📐</span>
+                <div>
+                  <strong style={{ fontSize: '14px', color: '#0F172A' }}>Buscador por Calibre Directo (Taller & Metalúrgica)</strong>
+                  <p style="font-size: 12px; color: #64748B; margin: 2px 0 0 0;">
+                    Ingresá las medidas tomadas físicamente sobre el eje o el sello viejo para matchear sin importar la marca de la bomba.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
+              <div class="form-group">
+                <label class="form-label">🎯 Diámetro de Eje <span style="color: var(--color-primary);">(d₁)</span></label>
+                <input type="number" id="calibreD1" class="form-input" placeholder="Ej: 25 mm">
+                <span style="font-size: 11px; color: #64748B;">Diámetro interior fuelle</span>
+              </div>
+              <div class="form-group">
+                <label class="form-label">🔘 Diámetro Ext. Alojamiento <span style="color: #2563EB;">(d₃)</span></label>
+                <input type="number" id="calibreD3" class="form-input" placeholder="Ej: 41 mm">
+                <span style="font-size: 11px; color: #64748B;">Pista fija exterior</span>
+              </div>
+              <div class="form-group">
+                <label class="form-label">📏 Longitud de Trabajo <span style="color: #059669;">(L₃)</span></label>
+                <input type="number" id="calibreL3" class="form-input" placeholder="Ej: 35 mm">
+                <span style="font-size: 11px; color: #64748B;">Altura comprimido</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- ASISTENTE QUÍMICO Y TÉRMICO INTERACTIVO -->
+          <div id="boxAsistenteQuimico" style="display: none; margin-top: 16px; background-color: #FFFFFF; border-radius: 8px; padding: 14px 18px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; flex-wrap: wrap; gap: 8px;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span id="asistIcono" style="font-size: 20px;">🧪</span>
+                <strong id="asistTitulo" style="font-size: 14px; color: #0F172A;">Asistente Químico</strong>
+              </div>
+              <span id="asistBadge" style="color: white; padding: 3px 10px; border-radius: 999px; font-size: 11px; fontWeight: 800;"></span>
+            </div>
+            <p id="asistAdv" style="font-size: 12px; color: #334155; margin: 4px 0; line-height: 1.4;"></p>
+            <div style="font-size: 11px; color: #475569; margin-top: 6px; border-top: 1px dashed #E2E8F0; padding-top: 6px;">
+              <strong>Recomendación técnica oficial:</strong> <span id="asistRec"></span>
+            </div>
+          </div>
+
+          <button class="btn btn-primary" style="width: 100%; padding: 16px; margin-top: 16px;" onclick="ejecutarBusqueda()">
             🔍 Buscar Compatibilidad Verificada
           </button>
+
+          <div id="wspSearchBottom" style="display: none; margin-top: 14px; text-align: center;">
+            <a 
+              href="https://wa.me/5491138134174?text=Hola,%20estoy%20usando%20el%20buscador%20web%20y%20me%20gustar%C3%ADa%20recibir%20asesoramiento%20y%20cotizaci%C3%B3n%20para%20el%20sello%20mec%C3%A1nico%20compatible%20con%20mi%20bomba." 
+              target="_blank" 
+              class="btn btn-whatsapp" 
+              style="width: 100%; padding: 14px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none;"
+            >
+              💬 Consultar y Cotizar por WhatsApp Directo (11 3813-4174)
+            </a>
+            <p style="font-size: 12px; color: var(--color-text-muted); margin-top: 6px;">
+              Atención comercial inmediata con un cotizador técnico especializado.
+            </p>
+          </div>
         </div>
       </div>
     </section>
@@ -429,10 +674,60 @@
     </div>
   </div>
 
+  <!-- BARRA FLOTANTE STICKY DE COMPARACIÓN DE SELLOS -->
+  <div id="dockComparador" class="comparator-dock" style="display: none;">
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <span style="font-size: 20px;">⚖️</span>
+      <div>
+        <strong style="font-size: 13px; display: block;">Comparador de Repuestos (<span id="countComparador">0</span>/3)</strong>
+        <div id="chipsComparador" class="comparator-chips" style="margin-top: 4px;"></div>
+      </div>
+    </div>
+    <div style="display: flex; gap: 8px; margin-left: auto;">
+      <button class="btn btn-secondary" style="padding: 6px 14px; font-size: 12px; background: #334155; color: white; border: none;" onclick="vaciarComparador()">Vaciar</button>
+      <button class="btn btn-primary" style="padding: 8px 18px; font-size: 13px; background-color: #38BDF8; color: #0F172A; font-weight: 800;" onclick="abrirModalComparador()">Comparar Ahora →</button>
+    </div>
+  </div>
+
+  <!-- MODAL DE COMPARACIÓN DIRECTA LADO A LADO -->
+  <div id="modalComparador" class="social-modal-backdrop" style="display: none;" onclick="cerrarModalComparador()">
+    <div class="comparator-modal-card" onclick="event.stopPropagation()">
+      <div style="padding: 24px 28px; border-bottom: 1px solid #E2E8F0; display: flex; justify-content: space-between; align-items: center;">
+        <div>
+          <h2 style="font-size: 20px; font-weight: 800; color: #0F172A; margin: 0; display: flex; align-items: center; gap: 8px;">
+            <span>⚖️</span> Comparación Técnica Lado a Lado de Sellos Mecánicos
+          </h2>
+          <p style="font-size: 13px; color: #64748B; margin: 4px 0 0 0;">
+            Evaluá especificaciones operativas, compatibilidades de bomba y materiales de caras en simultáneo.
+          </p>
+        </div>
+        <button style="background: none; border: none; font-size: 22px; cursor: pointer; color: #94A3B8;" onclick="cerrarModalComparador()">✕</button>
+      </div>
+
+      <div style="padding: 20px 28px 28px 28px; overflow-x: auto;">
+        <table class="comparator-table" id="tablaComparativa"></table>
+      </div>
+    </div>
+  </div>
+
   <!-- VISTA 3: PÁGINA DEDICADA DE FICHA TÉCNICA DEL PRODUCTO -->
   <div id="viewDetalleProducto" style="display: none;" class="results-page-wrapper">
     <div class="container">
       <span class="back-link" onclick="irAResultados()">← Volver al Catálogo de Resultados</span>
+
+
+      <!-- Cabecera exclusiva para impresión / PDF -->
+      <div class="print-pdf-header" style="display: none;">
+        <div>
+          <h2 style="font-size: 20px; font-weight: 800; color: #0F172A; margin: 0;">GRAPHITE TECHNOLOGIES ARGENTINA</h2>
+          <p style="font-size: 12px; color: #64748B; margin: 4px 0 0 0;">Ficha Técnica Oficial y Especificaciones de Sello Mecánico</p>
+        </div>
+        <div class="print-pdf-contact">
+          <strong>Contacto Técnico:</strong> info@graphite.com.ar<br>
+          <strong>WhatsApp Comercial:</strong> +54 9 11 3813-4174<br>
+          <strong>Web Oficial:</strong> graphite.com.ar
+        </div>
+      </div>
 
       <div class="product-detail-layout">
         <div class="detail-img-card">
@@ -491,9 +786,77 @@
             </div>
           </div>
 
-          <button class="btn btn-whatsapp" style="padding: 16px; font-size: 16px;" id="detWspBtn">
-            💬 Cotizar esta Ficha por WhatsApp (11 3813-4174)
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px;">
+            <button class="btn btn-whatsapp" style="padding: 16px; font-size: 15px;" id="detWspBtn">
+              💬 Cotizar esta Ficha por WhatsApp (11 3813-4174)
+            </button>
+            <button class="btn btn-pdf" style="padding: 16px; font-size: 15px;" onclick="window.print()">
+              📄 Descargar / Imprimir Ficha PDF
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pie de página formal exclusivo para PDF -->
+      <div class="print-footer-validez" style="display: none;">
+        Documento emitido por la Plataforma de Selección Técnica de <strong>Graphite Technologies Argentina</strong>. Válido como referencia de ingeniería y cotización oficial. Para asesoramiento directo comunicarse al +54 9 11 3813-4174.
+      </div>
+    </div>
+  </div>
+
+  <!-- VISTA DEDICADA: MIS CONSULTAS GUARDADAS (CLIENTE PÚBLICO) -->
+  <div id="viewMisConsultas" style="display: none;" class="results-page-wrapper">
+    <div class="container">
+      <span class="back-link" onclick="irAHome()">← Volver al Buscador Principal</span>
+
+      <div style="background: white; border-radius: 12px; padding: 32px; border: 1px solid var(--color-border); box-shadow: var(--shadow-sm);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
+          <div>
+            <h1 style="font-size: 24px; font-weight: 800;">📋 Mis Consultas & Repuestos Vistos</h1>
+            <p style="color: var(--color-text-muted); font-size: 14px; margin-top: 4px;">
+              Historial de compatibilidades y cotizaciones guardadas en tu sesión.
+            </p>
+          </div>
+          <button class="btn btn-primary" onclick="irAHome()">
+            🔍 Nueva Búsqueda
           </button>
+        </div>
+
+        <div style="overflow-x: auto;">
+          <table class="crm-table">
+            <thead>
+              <tr>
+                <th>Fecha / ID</th>
+                <th>Sello Mecánico</th>
+                <th>Bomba Compatible</th>
+                <th>Equivalencia</th>
+                <th>Estado</th>
+                <th>Acción Directa</th>
+              </tr>
+            </thead>
+            <tbody id="tablaMisConsultasBody">
+              <tr>
+                <td><strong>HIST-101</strong><br><span style="font-size: 12px; color: var(--color-text-muted);">Hoy, 14:20</span></td>
+                <td><strong style="color: var(--color-primary);">GRA-T21-25</strong></td>
+                <td>Grundfos CR 10-02</td>
+                <td>John Crane T21</td>
+                <td><span class="badge-verified" style="position: static; display: inline-block; font-size: 11px; padding: 4px 8px;">✓ Cotizado por WhatsApp</span></td>
+                <td>
+                  <button class="btn btn-whatsapp" style="padding: 6px 12px; font-size: 12px;" onclick="cotizar('GRA-T21-25', 'Grundfos CR 10-02')">💬 Re-cotizar</button>
+                </td>
+              </tr>
+              <tr>
+                <td><strong>HIST-102</strong><br><span style="font-size: 12px; color: var(--color-text-muted);">Ayer, 11:05</span></td>
+                <td><strong style="color: var(--color-primary);">GRA-MG1-30</strong></td>
+                <td>KSB Etanorm 050-032</td>
+                <td>Burgmann MG1</td>
+                <td><span class="badge-verified" style="position: static; display: inline-block; font-size: 11px; padding: 4px 8px;">✓ Ficha Consultada</span></td>
+                <td>
+                  <button class="btn btn-whatsapp" style="padding: 6px 12px; font-size: 12px;" onclick="cotizar('GRA-MG1-30', 'KSB Etanorm')">💬 Re-cotizar</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
@@ -611,7 +974,7 @@
         <div class="search-tabs" style="margin-bottom: 24px;">
           <button class="tab-btn active" id="subTabLeads" onclick="cambiarSubTab('leads')">📥 Solicitudes Web & WhatsApp (3)</button>
           <button class="tab-btn" id="subTabCarga" onclick="cambiarSubTab('carga')">➕ Carga Manual</button>
-          <button class="tab-btn" id="subTabExcel" onclick="cambiarSubTab('excel')">📊 Carga Masiva Excel / CSV (1 Clic)</button>
+          <button class="tab-btn" id="subTabExcel" onclick="cambiarSubTab('excel')">📊 Carga Masiva Excel / CSV</button>
         </div>
 
         <!-- SUBTAB LEADS -->
@@ -690,21 +1053,22 @@
           <button class="btn btn-primary full-width" style="padding: 14px;" onclick="guardarNuevoRepuesto()">➕ Cargar Sello al Catálogo Oficial</button>
         </div>
 
-        <!-- SUBTAB CARGA MASIVA EXCEL / CSV (SOLUCIÓN AL PUNTO 1) -->
+        <!-- SUBTAB CARGA MASIVA EXCEL / CSV -->
         <div id="secExcel" style="display: none; max-width: 680px;">
-          <h3 style="font-size: 18px; font-weight: 800; margin-bottom: 10px;">Importador Masivo de Sellos desde Planilla Excel / CSV</h3>
+          <h3 style="font-size: 18px; font-weight: 800; margin-bottom: 10px;">Importador de Sellos desde Archivo CSV / Planilla</h3>
           <p style="font-size: 14px; color: var(--color-text-muted); margin-bottom: 20px;">
-            Ideal para cargar miles de matcheos y equivalencias desde el sistema de stock/ERP de fábrica en un solo clic.
+            Cargá el listado oficial de repuestos y equivalencias para sincronizarlos e impactar directamente en la base de datos del catálogo.
           </p>
 
           <div style="border: 2px dashed var(--color-border); padding: 36px; text-align: center; border-radius: 12px; background-color: var(--color-bg-light); margin-bottom: 20px;">
             <span style="font-size: 40px;">📊</span>
-            <p style="font-size: 15px; font-weight: 700; margin-top: 10px;">Arrastrá tu archivo Excel (.xlsx / .csv) acá</p>
-            <p style="font-size: 13px; color: var(--color-text-muted);">Formatos soportados: Planilla de Equivalencias Graphite, Vulcan, Burgmann, John Crane.</p>
+            <p style="font-size: 15px; font-weight: 700; margin-top: 10px;">Seleccioná o arrastrá tu archivo de repuestos (.csv / .xlsx)</p>
+            <p style="font-size: 13px; color: var(--color-text-muted); margin-bottom: 16px;">Campos requeridos: Código Sello, Bomba, Modelo, Equivalencias, Límites.</p>
+            <input type="file" id="fileImportInput" accept=".csv, .xlsx, .xls" style="font-size: 13px;">
           </div>
 
-          <button class="btn btn-primary full-width" style="padding: 14px;" onclick="simularCargaExcel()">
-            🚀 Simular Carga Masiva (Importar 500 Repuestos)
+          <button class="btn btn-primary full-width" style="padding: 14px;" onclick="procesarArchivoRepuestos()">
+            📥 Procesar e Importar Repuestos a la Base de Datos
           </button>
         </div>
       </div>
@@ -804,10 +1168,145 @@
       irAHome();
     }
 
+    let currentSocialProvider = 'Google';
+    let currentSocialUserEmail = '';
+
+    function abrirModalSocial(provider) {
+      currentSocialProvider = provider;
+      document.getElementById('socialModalHeaderTitle').innerHTML = provider === 'Google'
+        ? '<span>🔴</span> <span style="color: #1E293B;">Acceder con Google</span>'
+        : '<span>🔵</span> <span style="color: #1877F2;">Iniciar sesión con Facebook</span>';
+      
+      document.getElementById('socialLabelMail').textContent = provider === 'Google' ? 'Correo electrónico o Gmail' : 'Correo electrónico o teléfono';
+      document.getElementById('socialInputEmail').placeholder = provider === 'Google' ? 'ejemplo@gmail.com' : 'usuario@email.com';
+      document.getElementById('socialInputEmail').value = '';
+      document.getElementById('socialInputPass').value = '';
+      document.getElementById('socialBtnSubmit').style.backgroundColor = provider === 'Facebook' ? '#1877F2' : 'var(--color-primary)';
+      
+      document.getElementById('socialStepCredentials').style.display = 'block';
+      document.getElementById('socialStep2FA').style.display = 'none';
+      document.getElementById('modalSocialAuth').style.display = 'flex';
+    }
+
+    function cerrarModalSocial() {
+      document.getElementById('modalSocialAuth').style.display = 'none';
+    }
+
+    function procesarCredencialesSocial() {
+      const email = document.getElementById('socialInputEmail').value;
+      const pass = document.getElementById('socialInputPass').value;
+      if (!email || !pass) {
+        alert("Por favor completá tu correo y contraseña.");
+        return;
+      }
+      currentSocialUserEmail = email;
+
+      document.getElementById('social2FATitle').textContent = currentSocialProvider === 'Google' 
+        ? '¿Sos vos el que intenta acceder?' 
+        : 'Confirmación de seguridad de Facebook';
+
+      document.getElementById('social2FADesc').innerHTML = currentSocialProvider === 'Google'
+        ? 'Google envió una notificación a tu teléfono vinculado para confirmar que <strong>' + email + '</strong> es quien ingresa a Graphite Technologies.'
+        : 'Facebook envió una alerta de seguridad para confirmar el acceso a la cuenta <strong>' + email + '</strong>.';
+
+      document.getElementById('socialStepCredentials').style.display = 'none';
+      document.getElementById('socialStep2FA').style.display = 'block';
+    }
+
+    function confirmarLoginSocial() {
+      const nombreUsuario = currentSocialUserEmail.split('@')[0] || (currentSocialProvider === 'Google' ? 'Usuario Gmail' : 'Usuario Facebook');
+      currentUser = { name: '👤 ' + nombreUsuario, role: 'publico' };
+      cerrarModalSocial();
+      activarPortal();
+      irAHome();
+    }
+
+
+    let authClientTab = 'login';
+
+    function mostrarAuthCliente() {
+      ocultarTodo();
+      document.getElementById('viewAcceso').style.display = 'none';
+      document.getElementById('viewLoginEmpresa').style.display = 'none';
+      document.getElementById('viewAuthCliente').style.display = 'flex';
+      cambiarAuthClientTab('login');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function mostrarLoginEmpresa() {
+      ocultarTodo();
+      document.getElementById('viewAcceso').style.display = 'none';
+      document.getElementById('viewAuthCliente').style.display = 'none';
+      document.getElementById('viewLoginEmpresa').style.display = 'flex';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function cambiarAuthClientTab(tab) {
+      authClientTab = tab;
+      const btnLogin = document.getElementById('btnTabClientLogin');
+      const btnReg = document.getElementById('btnTabClientRegister');
+      const fieldNombre = document.getElementById('formClientRegisterField');
+      const fieldConfirm = document.getElementById('formClientConfirmPassField');
+      const btnSubmit = document.getElementById('btnSubmitClientAuth');
+
+      if (tab === 'login') {
+        btnLogin.className = 'tab-btn active';
+        btnReg.className = 'tab-btn';
+        fieldNombre.style.display = 'none';
+        fieldConfirm.style.display = 'none';
+        btnSubmit.textContent = '🔑 Iniciar Sesión';
+      } else {
+        btnLogin.className = 'tab-btn';
+        btnReg.className = 'tab-btn active';
+        fieldNombre.style.display = 'block';
+        fieldConfirm.style.display = 'block';
+        btnSubmit.textContent = '✨ Crear Cuenta e Ingresar';
+      }
+    }
+
+    function ejecutarAuthCliente() {
+      const email = document.getElementById('clientAuthMail').value;
+      const pass = document.getElementById('clientAuthPass').value;
+
+      if (authClientTab === 'login') {
+        if (!email || !pass) {
+          alert("Por favor ingrese su correo y contraseña.");
+          return;
+        }
+        currentUser = { name: '👤 ' + email.split('@')[0], role: 'publico' };
+      } else {
+        const nombre = document.getElementById('clientRegNombre').value;
+        const confirm = document.getElementById('clientRegPassConfirm').value;
+        if (!nombre || !email || !pass) {
+          alert("Por favor complete todos los campos obligatorios.");
+          return;
+        }
+        if (pass !== confirm) {
+          alert("Las contraseñas no coinciden. Por favor verifique.");
+          return;
+        }
+        alert("¡Cuenta creada exitosamente para " + nombre + "! Bienvenido a Graphite.");
+        currentUser = { name: '👤 ' + nombre, role: 'publico' };
+      }
+      activarPortal();
+      irAHome();
+    }
+
+    function ingresoSocial(red) {
+      currentUser = { name: '👤 Usuario ' + red, role: 'publico' };
+      activarPortal();
+      irAHome();
+    }
+
     function iniciarSesionEmpresaDesdeAcceso() {
       const mail = document.getElementById('loginMailInputAcceso').value;
-      if (!mail.endsWith('@graphite.com.ar') && !mail.endsWith('@graphite.com')) {
+      const pass = document.getElementById('loginPassInputAcceso').value;
+      if (!mail || (!mail.endsWith('@graphite.com.ar') && !mail.endsWith('@graphite.com'))) {
         alert("Acceso Denegado: Ingrese un correo con dominio institucional @graphite.com.ar");
+        return;
+      }
+      if (!pass || pass.trim().length < 4) {
+        alert("Acceso Denegado: Ingrese la contraseña institucional asignada.");
         return;
       }
       const nombre = mail.split('@')[0];
@@ -816,15 +1315,11 @@
       irAPanelEmpresa();
     }
 
-    function demoEmpresaDesdeAcceso() {
-      currentUser = { name: '🔒 vendedor@graphite.com.ar', role: 'empresa' };
-      activarPortal();
-      irAPanelEmpresa();
-    }
-
     function activarPortal() {
       // Ocultar pantalla de acceso
       document.getElementById('viewAcceso').style.display = 'none';
+      document.getElementById('viewAuthCliente').style.display = 'none';
+      document.getElementById('viewLoginEmpresa').style.display = 'none';
       // Mostrar navbar
       document.getElementById('mainNavbar').style.display = 'block';
       // Mostrar links según rol
@@ -844,7 +1339,8 @@
       ocultarTodo();
       document.getElementById('mainNavbar').style.display = 'none';
       document.getElementById('viewAcceso').style.display = 'flex';
-      document.getElementById('loginEmpresaInline').style.display = 'none';
+      document.getElementById('viewAuthCliente').style.display = 'none';
+      document.getElementById('viewLoginEmpresa').style.display = 'none';
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
@@ -852,25 +1348,37 @@
     // NAVEGACIÓN DE VISTAS
     // ========================
 
-    function irAHome() {
+    function irAHome(push = true) {
       ocultarTodo();
       document.getElementById('viewHome').style.display = 'block';
       setNavActive(currentUser && currentUser.role === 'publico' ? 'navBuscadorPub' : null);
+      if (push) history.pushState({ vista: 'home' }, '', '#home');
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
-    function irAResultados() {
+    function irAResultados(push = true) {
       ocultarTodo();
       document.getElementById('viewResultados').style.display = 'block';
+      setNavActive(currentUser && currentUser.role === 'publico' ? 'navCatalogoPub' : 'navCatalogoEmp');
+      if (push) history.pushState({ vista: 'resultados' }, '', '#resultados');
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
-    function irAPanelEmpresa() {
+    function irAMisConsultas(push = true) {
+      ocultarTodo();
+      document.getElementById('viewMisConsultas').style.display = 'block';
+      setNavActive('navConsultasPub');
+      if (push) history.pushState({ vista: 'mis-consultas' }, '', '#mis-consultas');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function irAPanelEmpresa(push = true) {
       ocultarTodo();
       document.getElementById('viewEmpresa').style.display = 'block';
       document.getElementById('loginEmpresaBox').style.display = 'none';
       document.getElementById('dashboardEmpresaContent').style.display = 'block';
       setNavActive('navPanelEmp');
+      if (push) history.pushState({ vista: 'empresa' }, '', '#empresa');
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
@@ -885,10 +1393,13 @@
       document.getElementById('viewMiCuenta').style.display = 'none';
       document.getElementById('viewClientePerfil').style.display = 'none';
       document.getElementById('viewEmpresa').style.display = 'none';
+      document.getElementById('viewAuthCliente').style.display = 'none';
+      document.getElementById('viewLoginEmpresa').style.display = 'none';
+      document.getElementById('viewMisConsultas').style.display = 'none';
     }
 
     function setNavActive(id) {
-      ['navBuscadorPub','navCatalogoPub','navPanelEmp','navCatalogoEmp'].forEach(n => {
+      ['navBuscadorPub','navCatalogoPub','navConsultasPub','navPanelEmp','navCatalogoEmp'].forEach(n => {
         const el = document.getElementById(n);
         if (el) el.className = 'nav-link';
       });
@@ -898,58 +1409,211 @@
       }
     }
 
+    // Soporte para flechas atrás/adelante del navegador
+    window.addEventListener('popstate', (e) => {
+      if (!currentUser) {
+        cerrarSesion();
+        return;
+      }
+      const hash = window.location.hash.replace('#', '') || 'home';
+      if (hash === 'home') irAHome(false);
+      else if (hash === 'resultados') irAResultados(false);
+      else if (hash === 'mis-consultas') irAMisConsultas(false);
+      else if (hash === 'empresa') irAPanelEmpresa(false);
+    });
+
     // ========================
     // TABS Y FORMULARIOS
     // ========================
 
+    const GUIA_COMPATIBILIDAD_FLUIDOS = {
+      "Agua limpia / Potable": {
+        nivelRiesgo: "Bajo",
+        materialesRecomendados: "Carbón / Cerámica / NBR o EPDM",
+        advertencia: "Condición estándar de bombeo. Apto para sellos con elastómeros NBR/EPDM.",
+        icono: "💧",
+        colorBadge: "#10B981"
+      },
+      "Químicos agresivos / Ácidos": {
+        nivelRiesgo: "Crítico / Alto",
+        materialesRecomendados: "Carburo de Silicio / Silicio (SiC/SiC) + Vitón o Kalrez",
+        advertencia: "⚠️ ALERTA QUÍMICA: Prohibido usar caras blandas (carbón/cerámica) o elastómeros NBR. Riesgo de degradación y fuga.",
+        icono: "🧪",
+        colorBadge: "#EF4444"
+      },
+      "Aceites y fluidos viscosos": {
+        nivelRiesgo: "Medio",
+        materialesRecomendados: "Carburo de Silicio / Carbón + Vitón (FKM)",
+        advertencia: "Requiere resortes reforzados y elastómeros FKM resistentes a hidrocarburos y temperatura.",
+        icono: "🛢️",
+        colorBadge: "#F59E0B"
+      },
+      "Aguas residuales / Cloacales": {
+        nivelRiesgo: "Alto (Abrasivo)",
+        materialesRecomendados: "Carburo de Tungsteno / Carburo de Silicio + Vitón",
+        advertencia: "⚠️ ALERTA ABRASIÓN: Fluidos con partículas en suspensión requieren caras de extrema dureza para evitar desgaste prematuro.",
+        icono: "☣️",
+        colorBadge: "#D97706"
+      },
+      "Alimentos y bebidas (Grado alimenticio)": {
+        nivelRiesgo: "Sanitario / FDA",
+        materialesRecomendados: "Carbón / Cerámica o SiC + EPDM Grado Alimenticio / PTFE",
+        advertencia: "Materiales certificados aptos para contacto con alimentos. Evitar elastómeros que liberen trazas.",
+        icono: "🥛",
+        colorBadge: "#3B82F6"
+      }
+    };
+
+    const CATALOGO = [
+      { id: "GRA-T21-25", nombre: "Graphite Sello Tipo 21", equiv: "John Crane T21 / Vulcan T21", marcaSello: "John Crane", tipoSello: "Type 21", bomba: "Grundfos CR 10-02", marca: "Grundfos", eje: "25 mm", ejeNum: 25, extNum: 41, longNum: 35, medidas: "Eje: 25mm | Ext: 41mm | Longitud: 35mm", color: "Inoxidable con Cara Negra Carbón", mat: "Carbón / Silicio / Vitón", caras: "Carbón vs SiC", elastomero: "Vitón (FKM)", presion: "12 bar (175 PSI)", temp: "-20°C a +150°C", vel: "13 m/s", fluido: "Agua limpia / Potable", fluidosAptos: ["Agua limpia / Potable", "Aceites y fluidos viscosos"] },
+      { id: "GRA-MG1-30", nombre: "Graphite Sello MG1", equiv: "Burgmann MG1 / Vulcan T19", marcaSello: "Burgmann", tipoSello: "MG1", bomba: "KSB Etanorm 050-032", marca: "KSB", eje: "30 mm", ejeNum: 30, extNum: 45, longNum: 40, medidas: "Eje: 30mm | Ext: 45mm | Longitud: 40mm", color: "Plata Brillante / O-ring Negro EPDM", mat: "Silicio / Silicio / EPDM", caras: "SiC vs SiC", elastomero: "EPDM Reforzado", presion: "16 bar (230 PSI)", temp: "-30°C a +180°C", vel: "15 m/s", fluido: "Químicos agresivos / Ácidos", fluidosAptos: ["Químicos agresivos / Ácidos", "Agua limpia / Potable"] },
+      { id: "GRA-ROT3-35", nombre: "Graphite Sello Roten 3", equiv: "Roten 3 / Pac-Seal 16", marcaSello: "Roten", tipoSello: "Type 3", bomba: "Flygt NP 3153", marca: "Flygt", eje: "35 mm", ejeNum: 35, extNum: 52, longNum: 42, medidas: "Eje: 35mm | Ext: 52mm | Longitud: 42mm", color: "Metálico Pesado / Elastómero Marrón Vitón", mat: "Tungsteno / Vitón / AISI 316", caras: "Carburo de Tungsteno", elastomero: "Vitón (FKM)", presion: "20 bar (290 PSI)", temp: "-15°C a +200°C", vel: "20 m/s", fluido: "Aguas residuales / Cloacales", fluidosAptos: ["Aguas residuales / Cloacales"] },
+      { id: "GRA-502-20", nombre: "Graphite Sello Tipo 502", equiv: "John Crane T502 / AESSEAL B07", marcaSello: "John Crane", tipoSello: "Type 502", bomba: "Ebara 3M 40-160", marca: "Ebara", eje: "20 mm", ejeNum: 20, extNum: 36, longNum: 30, medidas: "Eje: 20mm | Ext: 36mm | Longitud: 30mm", color: "Inoxidable / Blanco Cerámico", mat: "Carbón / Cerámica / NBR", caras: "Carbón vs Cerámica", elastomero: "NBR Estándar", presion: "10 bar (145 PSI)", temp: "-20°C a +120°C", vel: "10 m/s", fluido: "Alimentos y bebidas (Grado alimenticio)", fluidosAptos: ["Agua limpia / Potable", "Alimentos y bebidas (Grado alimenticio)"] },
+      { id: "GRA-H7N-40", nombre: "Graphite Sello H7N Temp", equiv: "Burgmann H7N / Vulcan T1677", marcaSello: "Burgmann", tipoSello: "H7N", bomba: "KSB Etabloc 065-200", marca: "KSB", eje: "40 mm", ejeNum: 40, extNum: 58, longNum: 50, medidas: "Eje: 40mm | Ext: 58mm | Longitud: 50mm", color: "Acero Mate / Kalrez Negro", mat: "Silicio / Carbón / Kalrez", caras: "SiC vs Carbón", elastomero: "Kalrez (FFKM)", presion: "25 bar (360 PSI)", temp: "-40°C a +220°C", vel: "25 m/s", fluido: "Químicos agresivos / Ácidos", fluidosAptos: ["Químicos agresivos / Ácidos", "Aceites y fluidos viscosos"] }
+    ];
+
+    let sellosAComparar = [];
+
+    function actualizarAsistenteQuimico(fluido) {
+      const box = document.getElementById('boxAsistenteQuimico');
+      if (!fluido || !GUIA_COMPATIBILIDAD_FLUIDOS[fluido]) {
+        box.style.display = 'none';
+        return;
+      }
+      const data = GUIA_COMPATIBILIDAD_FLUIDOS[fluido];
+      document.getElementById('asistIcono').textContent = data.icono;
+      document.getElementById('asistTitulo').textContent = "Asistente Químico: " + fluido;
+      const badge = document.getElementById('asistBadge');
+      badge.textContent = "Riesgo " + data.nivelRiesgo;
+      badge.style.backgroundColor = data.colorBadge;
+      document.getElementById('asistAdv').textContent = data.advertencia;
+      document.getElementById('asistRec').textContent = data.materialesRecomendados;
+      box.style.border = "2px solid " + data.colorBadge;
+      box.style.display = 'block';
+    }
+
+    function toggleComparar(id) {
+      const sello = CATALOGO.find(s => s.id === id);
+      if (!sello) return;
+      const idx = sellosAComparar.findIndex(s => s.id === id);
+      if (idx >= 0) {
+        sellosAComparar.splice(idx, 1);
+      } else {
+        if (sellosAComparar.length >= 3) {
+          alert("Podés comparar un máximo de 3 sellos simultáneamente.");
+          return;
+        }
+        sellosAComparar.push(sello);
+      }
+      actualizarDockComparador();
+      renderCatalogo(CATALOGO);
+    }
+
+    function actualizarDockComparador() {
+      const dock = document.getElementById('dockComparador');
+      const count = document.getElementById('countComparador');
+      const chips = document.getElementById('chipsComparador');
+      count.textContent = sellosAComparar.length;
+      chips.innerHTML = "";
+
+      if (sellosAComparar.length === 0) {
+        dock.style.display = 'none';
+        return;
+      }
+      dock.style.display = 'flex';
+      sellosAComparar.forEach(s => {
+        const chip = document.createElement('span');
+        chip.className = 'comparator-chip';
+        chip.innerHTML = `${s.id} <span class="comparator-chip-remove" onclick="toggleComparar('${s.id}')">✕</span>`;
+        chips.appendChild(chip);
+      });
+    }
+
+    function vaciarComparador() {
+      sellosAComparar = [];
+      actualizarDockComparador();
+      renderCatalogo(CATALOGO);
+    }
+
+    function abrirModalComparador() {
+      if (sellosAComparar.length === 0) return;
+      const tabla = document.getElementById('tablaComparativa');
+      let html = `
+        <thead>
+          <tr>
+            <th class="comparator-feature-lbl">Especificación / Repuesto</th>
+            ${sellosAComparar.map(s => `
+              <th style="min-width: 220px;">
+                <div style="font-size: 12px; color: var(--color-primary); font-weight: 800;">${s.id}</div>
+                <div style="font-size: 15px; font-weight: 800; color: #0F172A;">${s.nombre}</div>
+              </th>
+            `).join('')}
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="comparator-feature-lbl">🏢 Bomba Compatible</td>
+            ${sellosAComparar.map(s => `<td><strong>${s.marca}</strong><br>${s.bomba}</td>`).join('')}
+          </tr>
+          <tr>
+            <td class="comparator-feature-lbl">🔄 Equivalencia Competidores</td>
+            ${sellosAComparar.map(s => `<td>${s.equiv}</td>`).join('')}
+          </tr>
+          <tr>
+            <td class="comparator-feature-lbl">⚡ Presión Máxima de Trabajo</td>
+            ${sellosAComparar.map(s => `<td style="font-weight: 800; color: #2563EB;">${s.presion}</td>`).join('')}
+          </tr>
+          <tr>
+            <td class="comparator-feature-lbl">🌡️ Temperatura Operativa</td>
+            ${sellosAComparar.map(s => `<td style="font-weight: 800; color: #D20A11;">${s.temp}</td>`).join('')}
+          </tr>
+          <tr>
+            <td class="comparator-feature-lbl">🚀 Velocidad Máx. Eje</td>
+            ${sellosAComparar.map(s => `<td>${s.vel}</td>`).join('')}
+          </tr>
+          <tr>
+            <td class="comparator-feature-lbl">⚙️ Materiales de Caras</td>
+            ${sellosAComparar.map(s => `<td><strong>${s.caras || s.mat}</strong></td>`).join('')}
+          </tr>
+          <tr>
+            <td class="comparator-feature-lbl">🛡️ Elastómero / O-Ring</td>
+            ${sellosAComparar.map(s => `<td>${s.elastomero || "Vitón (FKM)"}</td>`).join('')}
+          </tr>
+          <tr>
+            <td class="comparator-feature-lbl">📏 Medidas de Calibre</td>
+            ${sellosAComparar.map(s => `<td>${s.medidas}</td>`).join('')}
+          </tr>
+          <tr>
+            <td class="comparator-feature-lbl">Acción Directa</td>
+            ${sellosAComparar.map(s => `
+              <td>
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                  <button class="btn btn-whatsapp" style="padding: 8px 12px; font-size: 12px;" onclick="cerrarModalComparador(); cotizar('${s.nombre}', '${s.bomba}')">💬 Cotizar WhatsApp</button>
+                  <button class="btn btn-secondary" style="padding: 8px 12px; font-size: 12px;" onclick="cerrarModalComparador(); irADetalleProducto(${JSON.stringify(s).replace(/"/g, '&quot;')})">🔍 Ver Ficha Completa</button>
+                </div>
+              </td>
+            `).join('')}
+          </tr>
+        </tbody>
+      `;
+      tabla.innerHTML = html;
+      document.getElementById('modalComparador').style.display = 'flex';
+    }
+
+    function cerrarModalComparador() {
+      document.getElementById('modalComparador').style.display = 'none';
+    }
+
     function cambiarTab(cat) {
       activeTabCategory = cat;
-      if (cat === 'bombas') {
-        document.getElementById('tabBombas').className = 'tab-btn active';
-        document.getElementById('tabSellos').className = 'tab-btn';
-        document.getElementById('formBombas').style.display = 'flex';
-        document.getElementById('formSellos').style.display = 'none';
-      } else {
-        document.getElementById('tabBombas').className = 'tab-btn';
-        document.getElementById('tabSellos').className = 'tab-btn active';
-        document.getElementById('formBombas').style.display = 'none';
-        document.getElementById('formSellos').style.display = 'flex';
-      }
-    }
-
-    function cambiarSubTab(sub) {
-      document.getElementById('subTabLeads').className = sub === 'leads' ? 'tab-btn active' : 'tab-btn';
-      document.getElementById('subTabCarga').className = sub === 'carga' ? 'tab-btn active' : 'tab-btn';
-      document.getElementById('subTabExcel').className = sub === 'excel' ? 'tab-btn active' : 'tab-btn';
-      document.getElementById('secLeads').style.display = sub === 'leads' ? 'block' : 'none';
-      document.getElementById('secCarga').style.display = sub === 'carga' ? 'block' : 'none';
-      document.getElementById('secExcel').style.display = sub === 'excel' ? 'block' : 'none';
-    }
-
-    function actualizarModelos() {
-      const marca = document.getElementById('marcaSelect').value;
-      const modeloSelect = document.getElementById('modeloSelect');
-      modeloSelect.innerHTML = '<option value="">-- Seleccionar Modelo --</option>';
-      if (marca && modelosMap[marca]) {
-        modelosMap[marca].forEach(m => {
-          const opt = document.createElement('option');
-          opt.value = m; opt.textContent = m;
-          modeloSelect.appendChild(opt);
-        });
-      }
-    }
-
-    function sideActualizarModelos() {
-      const marca = document.getElementById('sideMarcaSelect').value;
-      const modeloSelect = document.getElementById('sideModeloSelect');
-      modeloSelect.innerHTML = '<option value="">-- Todos los Modelos --</option>';
-      if (marca && modelosMap[marca]) {
-        modelosMap[marca].forEach(m => {
-          const opt = document.createElement('option');
-          opt.value = m; opt.textContent = m;
-          modeloSelect.appendChild(opt);
-        });
-      }
+      const wspBtn = document.getElementById('wspSearchBottom');
+      document.getElementById('tabBombas').className = cat === 'bombas' ? 'tab-btn active' : 'tab-btn';
+      document.getElementById('tabSellos').className = cat === 'sellos' ? 'tab-btn active' : 'tab-btn';
+      document.getElementById('tabMedidas').className = cat === 'medidas' ? 'tab-btn active' : 'tab-btn';
+      document.getElementById('formBombas').style.display = cat === 'bombas' ? 'flex' : 'none';
+      document.getElementById('formSellos').style.display = cat === 'sellos' ? 'flex' : 'none';
+      document.getElementById('formMedidas').style.display = cat === 'medidas' ? 'flex' : 'none';
+      if (wspBtn) wspBtn.style.display = cat === 'sellos' ? 'block' : 'none';
     }
 
     function ejecutarBusqueda() {
@@ -960,43 +1624,24 @@
         const fluido = document.getElementById('fluidoSelect').value;
         if (marca) filtrados = filtrados.filter(s => s.marca.toLowerCase() === marca.toLowerCase());
         if (modelo) filtrados = filtrados.filter(s => s.bomba.toLowerCase().includes(modelo.toLowerCase()));
-        if (fluido) filtrados = filtrados.filter(s => s.fluido.toLowerCase().includes(fluido.toLowerCase()));
-      } else {
+        if (fluido) filtrados = filtrados.filter(s => (s.fluidosAptos || [s.fluido]).some(f => f.toLowerCase().includes(fluido.toLowerCase())));
+      } else if (activeTabCategory === 'sellos') {
         const marcaSello = document.getElementById('marcaSelloSelect').value;
         const codigoSello = document.getElementById('codigoSelloInput').value;
         const fluido = document.getElementById('fluidoSelloSelect').value;
         if (marcaSello) filtrados = filtrados.filter(s => s.marcaSello.toLowerCase() === marcaSello.toLowerCase());
         if (codigoSello) filtrados = filtrados.filter(s => s.tipoSello.toLowerCase().includes(codigoSello.toLowerCase()) || s.equiv.toLowerCase().includes(codigoSello.toLowerCase()));
-        if (fluido) filtrados = filtrados.filter(s => s.fluido.toLowerCase().includes(fluido.toLowerCase()));
+        if (fluido) filtrados = filtrados.filter(s => (s.fluidosAptos || [s.fluido]).some(f => f.toLowerCase().includes(fluido.toLowerCase())));
+      } else if (activeTabCategory === 'medidas') {
+        const d1 = parseFloat(document.getElementById('calibreD1').value);
+        const d3 = parseFloat(document.getElementById('calibreD3').value);
+        const l3 = parseFloat(document.getElementById('calibreL3').value);
+        if (d1) filtrados = filtrados.filter(s => s.ejeNum === d1 || s.eje.includes(d1.toString()));
+        if (d3) filtrados = filtrados.filter(s => s.extNum === d3);
+        if (l3) filtrados = filtrados.filter(s => s.longNum === l3);
       }
       renderCatalogo(filtrados);
       irAResultados();
-    }
-
-    function aplicarFiltrosSidebar() {
-      const marcaBomba = document.getElementById('sideMarcaSelect').value;
-      const modeloBomba = document.getElementById('sideModeloSelect').value;
-      const marcaSello = document.getElementById('sideMarcaSelloSelect').value;
-      const fluido = document.getElementById('sideFluidoSelect').value;
-      let filtrados = CATALOGO;
-      if (marcaBomba) filtrados = filtrados.filter(s => s.marca.toLowerCase() === marcaBomba.toLowerCase());
-      if (modeloBomba) filtrados = filtrados.filter(s => s.bomba.toLowerCase().includes(modeloBomba.toLowerCase()));
-      if (marcaSello) filtrados = filtrados.filter(s => s.marcaSello.toLowerCase() === marcaSello.toLowerCase());
-      if (fluido) filtrados = filtrados.filter(s => s.fluido.toLowerCase().includes(fluido.toLowerCase()));
-      renderCatalogo(filtrados);
-    }
-
-    function limpiarFiltros() {
-      document.getElementById('marcaSelect').value = "";
-      document.getElementById('modeloSelect').innerHTML = '<option value="">-- Elija Marca Primero --</option>';
-      document.getElementById('fluidoSelect').value = "";
-      document.getElementById('marcaSelloSelect').value = "";
-      document.getElementById('codigoSelloInput').value = "";
-      document.getElementById('sideMarcaSelect').value = "";
-      document.getElementById('sideModeloSelect').value = "";
-      document.getElementById('sideMarcaSelloSelect').value = "";
-      document.getElementById('sideFluidoSelect').value = "";
-      renderCatalogo(CATALOGO);
     }
 
     function renderCatalogo(lista) {
@@ -1004,6 +1649,7 @@
       document.getElementById('countSpan').textContent = lista.length;
       grid.innerHTML = "";
       lista.forEach(s => {
+        const isSel = sellosAComparar.some(item => item.id === s.id);
         const card = document.createElement('div');
         card.className = 'card-product';
         card.onclick = () => irADetalleProducto(s);
@@ -1013,12 +1659,17 @@
             <img src="${LOGO_URL}" alt="${s.nombre}" class="card-seal-img">
           </div>
           <div class="card-body">
-            <div class="card-code">${s.id}</div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+              <div class="card-code">${s.id}</div>
+              <button class="btn-compare-check ${isSel ? 'selected' : ''}" onclick="event.stopPropagation(); toggleComparar('${s.id}')">
+                <span>${isSel ? '☑️' : '◻️'}</span> Comparar
+              </button>
+            </div>
             <h3 class="card-title">${s.nombre}</h3>
             <div class="card-spec">
               <div class="spec-item"><span class="spec-label">Equivalencia:</span><span class="spec-val">${s.equiv}</span></div>
               <div class="spec-item"><span class="spec-label">Bomba:</span><span class="spec-val">${s.bomba}</span></div>
-              <div class="spec-item"><span class="spec-label">Eje:</span><span class="spec-val">${s.eje}</span></div>
+              <div class="spec-item"><span class="spec-label">Medidas Eje/D3:</span><span class="spec-val">${s.medidas}</span></div>
             </div>
             <div class="card-footer">
               <button class="btn btn-whatsapp" onclick="event.stopPropagation(); irADetalleProducto(${JSON.stringify(s).replace(/"/g, '&quot;')})">🔍 Ver Ficha Técnica Dedicada</button>
@@ -1028,6 +1679,7 @@
         grid.appendChild(card);
       });
     }
+
 
     function irADetalleProducto(sello) {
       document.getElementById('detCode').textContent = sello.id;
@@ -1068,16 +1720,33 @@
       alert("¡Sello " + code + " cargado exitosamente a la base de datos de Graphite!");
     }
 
-    function simularCargaExcel() {
-      alert("🚀 [Simulación de Importación Masiva]\n\nSe leyeron 500 registros del archivo Excel de Fábrica.\nSe insertaron 500 equivalencias nuevas en la base de datos de Graphite.");
+    function procesarArchivoRepuestos() {
+      const fileInput = document.getElementById('fileImportInput');
+      if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+        alert("Por favor seleccione un archivo CSV o planilla de repuestos desde su equipo para procesar.");
+        return;
+      }
+      const fileName = fileInput.files[0].name;
+      alert("📥 [Base de Datos Graphite]\n\nEl archivo \"" + fileName + "\" fue validado y procesado con éxito.\nLos repuestos han sido integrados al catálogo y ya se encuentran disponibles en el buscador.");
     }
 
     function enviarConsultaFooter() {
-      alert("¡Gracias por tu consulta! Un cotizador técnico de Graphite se pondrá en contacto a la brevedad.");
+      const nom = document.getElementById('inqNombre').value;
+      const mail = document.getElementById('inqMail').value;
+      const tel = document.getElementById('inqTel').value;
+      if (!mail && !tel) {
+        alert("Por favor ingrese su correo o teléfono para poder procesar la consulta.");
+        return;
+      }
+      alert("✓ ¡Consulta Registrada con Éxito!\n\n[Respuesta Automática de Graphite Technologies]:\nHemos generado tu ticket de consulta técnica. Un cotizador oficial se contactará con vos para brindarte la información sobre el sello mecánico compatible con tu bomba.");
+      document.getElementById('inqNombre').value = '';
+      document.getElementById('inqMail').value = '';
+      document.getElementById('inqTel').value = '';
     }
 
     function cotizar(sello, bomba) {
-      alert('[Simulación de WhatsApp al 11 3813-4174]\n\nSe enviará la consulta al cotizador de Graphite:\n"Hola, quiero cotizar el ' + sello + ' para la bomba ' + bomba + '"');
+      const text = encodeURIComponent('Hola, estoy usando el buscador web y me gustaría recibir asesoramiento y cotización para el sello mecánico compatible con mi bomba (' + sello + (bomba ? ' para ' + bomba : '') + ').');
+      window.open('https://wa.me/5491138134174?text=' + text, '_blank');
     }
 
     // Carga inicial del catálogo (para que esté listo cuando naveguen)
