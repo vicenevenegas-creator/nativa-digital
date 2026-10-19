@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { MessageCircle, Mail, Instagram, Linkedin } from 'lucide-react';
 
 export default function Footer() {
   const [inquiry, setInquiry] = useState({ nombre: '', email: '', telefono: '' });
@@ -15,7 +16,7 @@ export default function Footer() {
   return (
     <footer className="footer">
       <div className="container footer-grid-3col">
-        {/* Columna 1: Contactos Oficiales con Links Exactos */}
+        {/* Columna 1: Contactos Oficiales con Links Exactos e Íconos Lucide */}
         <div className="footer-contacts">
           <div className="footer-brand-title">GRAPHITE TECHNOLOGIES</div>
           <p className="footer-desc">Plataforma unificada de matcheo y equivalencias de sellos mecánicos y bombas.</p>
@@ -23,25 +24,33 @@ export default function Footer() {
           <ul className="contact-list">
             <li className="contact-item">
               <a href="https://wa.me/5491138134174" target="_blank" rel="noreferrer" className="contact-link wa-hover">
-                <span className="contact-icon wa-bg">💬</span>
+                <span className="contact-icon wa-bg" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <MessageCircle size={16} />
+                </span>
                 <span><strong>WhatsApp:</strong> 11 3813-4174</span>
               </a>
             </li>
             <li className="contact-item">
-              <a href="mailto:info@graphite.com.ar" className="contact-link mail-hover">
-                <span className="contact-icon mail-bg">✉️</span>
+              <a href="mailto:info@graphite.com.ar" target="_blank" rel="noreferrer" className="contact-link mail-hover">
+                <span className="contact-icon mail-bg" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Mail size={16} />
+                </span>
                 <span><strong>Mail:</strong> info@graphite.com.ar</span>
               </a>
             </li>
             <li className="contact-item">
               <a href="https://www.instagram.com/graphite.technologies?igsi=MXJ2dXBldXQ4bXVwcg==" target="_blank" rel="noreferrer" className="contact-link insta-hover">
-                <span className="contact-icon insta-bg">📷</span>
+                <span className="contact-icon insta-bg" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Instagram size={16} />
+                </span>
                 <span><strong>Instagram:</strong> @graphite.technologies</span>
               </a>
             </li>
             <li className="contact-item">
               <a href="https://www.linkedin.com/in/graphite-technologies/" target="_blank" rel="noreferrer" className="contact-link linkedin-hover">
-                <span className="contact-icon linkedin-bg">💼</span>
+                <span className="contact-icon linkedin-bg" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Linkedin size={16} />
+                </span>
                 <span><strong>LinkedIn:</strong> Graphite Technologies</span>
               </a>
             </li>

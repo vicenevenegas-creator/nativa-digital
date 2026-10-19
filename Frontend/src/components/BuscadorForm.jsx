@@ -39,7 +39,7 @@ export default function BuscadorForm({
           className={`tab-btn ${activeCategory === 'medidas' ? 'active' : ''}`}
           onClick={() => setActiveCategory('medidas')}
         >
-          📏 Por Medidas de Calibre (d₁, d₃, L₃)
+          📏 Por Medidas de Calibre
         </button>
       </div>
 
@@ -178,7 +178,7 @@ export default function BuscadorForm({
           <div className="form-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))' }}>
             <div className="form-group">
               <label className="form-label">
-                🎯 Diámetro de Eje <span style={{ color: 'var(--color-primary)' }}>(d₁)</span>
+                🎯 Diámetro del Eje (mm)
               </label>
               <input 
                 type="number" 
@@ -192,7 +192,7 @@ export default function BuscadorForm({
 
             <div className="form-group">
               <label className="form-label">
-                🔘 Diámetro Exterior Alojamiento <span style={{ color: '#2563EB' }}>(d₃)</span>
+                🔘 Diámetro Exterior del Alojamiento (mm)
               </label>
               <input 
                 type="number" 
@@ -206,7 +206,7 @@ export default function BuscadorForm({
 
             <div className="form-group">
               <label className="form-label">
-                📏 Longitud de Trabajo <span style={{ color: '#059669' }}>(L₃)</span>
+                📏 Longitud de Trabajo / Altura (mm)
               </label>
               <input 
                 type="number" 

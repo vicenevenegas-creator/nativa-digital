@@ -124,6 +124,34 @@ body {
   border-bottom: 2px solid var(--color-primary);
 }
 
+.navbar-social-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nav-social-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  color: var(--color-text-muted);
+  background-color: var(--color-bg-light);
+  border: 1px solid var(--color-border);
+  transition: all 0.2s ease-in-out;
+  text-decoration: none;
+}
+
+.nav-social-btn:hover {
+  color: var(--color-primary);
+  border-color: var(--color-primary);
+  background-color: #FFFFFF;
+  transform: translateY(-2px);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
 /* Buttons */
 .btn {
   display: inline-flex;

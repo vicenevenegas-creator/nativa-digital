@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Navbar from './components/Navbar';
 import BuscadorForm from './components/BuscadorForm';
 import Footer from './components/Footer';
+import { supabase } from './supabase';
 import { SELLOS_REPUESSTOS, MARCAS_BOMBA, MODELOS_BOMBA, MARCAS_SELLO_COMPETIDOR, TIPOS_FLUIDO, MOCK_LEADS_CONSULTAS } from './data/mockData';
 import './styles/design-system.css';
 
@@ -12,31 +13,48 @@ export default function App() {
   const [activeCategory, setActiveCategory] = useState('bombas');
   const [selloSeleccionado, setSelloSeleccionado] = useState(SELLOS_REPUESSTOS[0]);
   
-  // Historial de consultas y sellos vistos del cliente
-  const [historialConsultasCliente, setHistorialConsultasCliente] = useState([
-    {
-      id: 'HIST-101',
-      fecha: 'Hoy, 14:20',
-      codigo: 'GRA-T21-25',
-      bomba: 'Grundfos CR 10-02',
-      equivalencia: 'John Crane T21',
-      estado: 'Cotizado por WhatsApp',
-      selloRef: SELLOS_REPUESSTOS[0]
-    },
-    {
-      id: 'HIST-102',
-      fecha: 'Ayer, 11:05',
-      codigo: 'GRA-MG1-30',
-      bomba: 'KSB Etanorm 050-032',
-      equivalencia: 'Burgmann MG1',
-      estado: 'Ficha Consultada',
-      selloRef: SELLOS_REPUESSTOS[1]
+  // Favoritos del cliente
+  const [favoritos, setFavoritos] = useState(() => {
+    try {
+      const saved = localStorage.getItem('graphite_favoritos');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
     }
-  ]);
+  });
+
+  const toggleFavorito = (sello, e = null) => {
+    if (e && e.stopPropagation) e.stopPropagation();
+    setFavoritos(prev => {
+      const exists = prev.some(f => f.id === sello.id);
+      let updated;
+      if (exists) {
+        updated = prev.filter(f => f.id !== sello.id);
+      } else {
+        updated = [...prev, sello];
+      }
+      try {
+        localStorage.setItem('graphite_favoritos', JSON.stringify(updated));
+      } catch (err) {
+        console.error("Error guardando favoritos", err);
+      }
+      return updated;
+    });
+  };
+
+  // Historial de consultas enviadas a WhatsApp del cliente (solo cotizaciones)
+  const [historialConsultasCliente, setHistorialConsultasCliente] = useState(() => {
+    try {
+      const saved = localStorage.getItem('graphite_cotizaciones');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
 
   // Función centralizada de navegación sincronizada con el historial del navegador (Flechas atrás / adelante)
   const navegarA = (vista, tab = null, pushHistory = true) => {
-    const tabDestino = tab || (['home', 'resultados', 'mis-consultas', 'empresa'].includes(vista) ? vista : currentTab);
+    const tabDestino = tab || (['home', 'resultados', 'favoritos', 'mis-consultas', 'empresa'].includes(vista) ? vista : currentTab);
     setCurrentView(vista);
     setCurrentTab(tabDestino);
 
@@ -56,7 +74,7 @@ export default function App() {
         const hash = window.location.hash.replace('#', '');
         if (hash) {
           setCurrentView(hash);
-          if (['home', 'resultados', 'mis-consultas', 'empresa'].includes(hash)) {
+          if (['home', 'resultados', 'favoritos', 'mis-consultas', 'empresa'].includes(hash)) {
             setCurrentTab(hash);
           }
         } else {
@@ -82,36 +100,23 @@ export default function App() {
     confirmPass: ''
   });
 
-  // Modal interactivo de Login Social (Google / Facebook)
-  const [socialModal, setSocialModal] = useState({
-    open: false,
-    provider: 'Google', // 'Google' | 'Facebook'
-    step: 'credentials', // 'credentials' | '2fa' | 'loading'
-    email: '',
-    pass: ''
-  });
-
-  const abrirModalSocial = (provider) => {
-    setSocialModal({
-      open: true,
-      provider: provider,
-      step: 'credentials',
-      email: '',
-      pass: ''
-    });
-  };
-
-  const handleSocialSubmit = (e) => {
-    e.preventDefault();
-    if (!socialModal.email || !socialModal.pass) {
-      alert("Por favor completá tu correo y contraseña.");
-      return;
+  // Autenticación con Google vía Supabase
+  const handleGoogleLogin = async () => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`
+        }
+      });
+      if (error) {
+        console.error("Error al iniciar sesión con Google:", error.message);
+        alert("Error al iniciar sesión con Google: " + error.message);
+      }
+    } catch (err) {
+      console.error("Error inesperado en Google Auth:", err);
+      alert("Error al conectar con el servicio de autenticación.");
     }
-    // Pasar al paso de verificación / 2FA
-    setSocialModal(prev => ({ ...prev, step: 'loading' }));
-    setTimeout(() => {
-      setSocialModal(prev => ({ ...prev, step: '2fa' }));
-    }, 800);
   };
 
   const resolverRolYRedirigir = (email, nombreCustom = null) => {
@@ -144,20 +149,29 @@ export default function App() {
     navegarA('home', 'home');
   };
 
-  const handleConfirmar2FA = () => {
-    resolverRolYRedirigir(socialModal.email);
-    setSocialModal({ open: false, provider: 'Google', step: 'credentials', email: '', pass: '' });
-  };
+  // Escuchar sesión activa de Supabase (ej: login con Google OAuth)
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        const userEmail = session.user.email;
+        const userName = session.user.user_metadata?.full_name || session.user.user_metadata?.name || userEmail.split('@')[0];
+        resolverRolYRedirigir(userEmail, userName);
+      }
+    });
 
-  const handleFastLogin = (rol) => {
-    if (rol === 'admin') {
-      resolverRolYRedirigir('martin.hellwing@graphite.com', 'Martín Hellwing');
-    } else if (rol === 'vendedor') {
-      resolverRolYRedirigir('vendedor@graphite.com', 'Cotizador Técnico');
-    } else {
-      resolverRolYRedirigir('comprador@industria.com', 'Ing. Carlos Pérez');
-    }
-  };
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        const userEmail = session.user.email;
+        const userName = session.user.user_metadata?.full_name || session.user.user_metadata?.name || userEmail.split('@')[0];
+        resolverRolYRedirigir(userEmail, userName);
+      }
+    });
+
+    return () => {
+      subscription?.unsubscribe();
+    };
+  }, []);
+
 
   // Estado para el panel de empresa
   const [isEmpresaLoggedIn, setIsEmpresaLoggedIn] = useState(false);
@@ -293,28 +307,31 @@ export default function App() {
   };
 
 
-  const registrarEnHistorial = (sello, estado = 'Ficha Consultada') => {
+  const registrarEnHistorial = (sello, estado = 'Cotizado por WhatsApp') => {
+    const ahora = new Date();
+    const fechaTexto = `${ahora.toLocaleDateString('es-AR')}, ${ahora.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}`;
     setHistorialConsultasCliente(prev => {
-      const yaExiste = prev.find(h => h.codigo === sello.codigoEquivalente && h.bomba.includes(sello.marcaBombaCompatible));
-      if (yaExiste) return prev;
-      return [
-        {
-          id: `HIST-${Math.floor(Math.random() * 900 + 100)}`,
-          fecha: 'Reciente',
-          codigo: sello.codigoEquivalente,
-          bomba: `${sello.marcaBombaCompatible} ${sello.modeloBombaCompatible}`,
-          equivalencia: sello.equivalenteCompetidor,
-          estado: estado,
-          selloRef: sello
-        },
-        ...prev
-      ];
+      const nuevoItem = {
+        id: `COT-${Math.floor(Math.random() * 9000 + 1000)}`,
+        fecha: fechaTexto,
+        codigo: sello.codigoEquivalente,
+        bomba: `${sello.marcaBombaCompatible} ${sello.modeloBombaCompatible}`,
+        equivalencia: sello.equivalenteCompetidor,
+        estado: estado,
+        selloRef: sello
+      };
+      const actualizados = [nuevoItem, ...prev.filter(h => h.codigo !== sello.codigoEquivalente)];
+      try {
+        localStorage.setItem('graphite_cotizaciones', JSON.stringify(actualizados));
+      } catch (err) {
+        console.error("Error guardando cotizaciones en localStorage", err);
+      }
+      return actualizados;
     });
   };
 
   const handleVerDetalle = (sello) => {
     setSelloSeleccionado(sello);
-    registrarEnHistorial(sello, 'Ficha Consultada');
     navegarA('detalle', 'resultados');
   };
 
@@ -388,7 +405,9 @@ export default function App() {
         }}
         userIdentity={userIdentity}
         currentView={currentView}
+        favoritosCount={favoritos.length}
         onChangeAccess={() => {
+          supabase.auth.signOut().catch(() => {});
           setUserIdentity(null);
           setIsEmpresaLoggedIn(false);
           navegarA('acceso', 'acceso');
@@ -507,7 +526,7 @@ export default function App() {
                 type="button" 
                 className="btn btn-google full-width" 
                 style={{ padding: '12px', fontSize: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}
-                onClick={() => abrirModalSocial('Google')}
+                onClick={handleGoogleLogin}
               >
                 <svg width="18" height="18" viewBox="0 0 24 24">
                   <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -515,172 +534,12 @@ export default function App() {
                   <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
                   <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
                 </svg>
-                {clientAuthTab === 'register' ? 'Crear cuenta con Google (Gmail)' : 'Continuar con Google (Gmail)'}
+                Iniciar sesión con Google
               </button>
 
-              <p style={{ fontSize: '11.5px', color: 'var(--color-text-muted)', textAlign: 'center', marginTop: '8px' }}>
-                ¿No tenés cuenta creada? Podés elegir esta opción para ingresar o registrarte directamente.
+              <p style={{ fontSize: '11.5px', color: 'var(--color-text-muted)', textAlign: 'center', marginTop: '10px' }}>
+                Autenticación segura directa vía Supabase OAuth con cuenta de Google / Gmail.
               </p>
-
-              {/* Botones de Acceso Rápido Demo para los 3 perfiles */}
-              <div style={{ marginTop: '20px', paddingTop: '16px', borderTop: '1px solid var(--color-border)', backgroundColor: '#F8FAFC', padding: '14px', borderRadius: '8px' }}>
-                <span style={{ fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', color: 'var(--color-text-muted)', display: 'block', marginBottom: '8px', textAlign: 'center' }}>
-                  ⚡ Acceso Rápido de Prueba (Demo de Perfiles):
-                </span>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '6px' }}>
-                  <button 
-                    type="button" 
-                    className="btn btn-secondary" 
-                    style={{ padding: '8px 4px', fontSize: '11px', border: '1px solid #FCA5A5', color: '#991B1B', backgroundColor: '#FEF2F2', fontWeight: 700 }}
-                    onClick={() => handleFastLogin('admin')}
-                    title="martin.hellwing@graphite.com"
-                  >
-                    👑 Admin
-                  </button>
-                  <button 
-                    type="button" 
-                    className="btn btn-secondary" 
-                    style={{ padding: '8px 4px', fontSize: '11px', border: '1px solid #93C5FD', color: '#1E40AF', backgroundColor: '#EFF6FF', fontWeight: 700 }}
-                    onClick={() => handleFastLogin('vendedor')}
-                    title="vendedor@graphite.com"
-                  >
-                    👔 Vendedor
-                  </button>
-                  <button 
-                    type="button" 
-                    className="btn btn-secondary" 
-                    style={{ padding: '8px 4px', fontSize: '11px', border: '1px solid #CBD5E1', color: '#334155', backgroundColor: '#FFFFFF', fontWeight: 700 }}
-                    onClick={() => handleFastLogin('cliente')}
-                    title="cliente@industria.com"
-                  >
-                    👤 Cliente
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL INTERACTIVO DE AUTENTICACIÓN SOCIAL (GOOGLE / FACEBOOK) */}
-      {socialModal.open && (
-        <div className="social-modal-backdrop" onClick={() => setSocialModal({ ...socialModal, open: false })}>
-          <div className="social-modal-card" onClick={(e) => e.stopPropagation()}>
-            <div className="social-modal-header" style={{ borderBottom: '1px solid #E2E8F0' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div className="oauth-provider-badge">
-                  {socialModal.provider === 'Google' ? (
-                    <>
-                      <span style={{ fontSize: '20px' }}>🔴</span>
-                      <span style={{ color: '#1E293B', fontWeight: 800 }}>Acceder con Google</span>
-                    </>
-                  ) : (
-                    <>
-                      <span style={{ fontSize: '20px' }}>🔵</span>
-                      <span style={{ color: '#1877F2', fontWeight: 800 }}>Iniciar sesión con Facebook</span>
-                    </>
-                  )}
-                </div>
-                <button 
-                  style={{ background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer', color: '#94A3B8' }}
-                  onClick={() => setSocialModal({ ...socialModal, open: false })}
-                >
-                  ✕
-                </button>
-              </div>
-              <p style={{ fontSize: '12px', color: '#64748B', textAlign: 'left', marginTop: '4px' }}>
-                Conectar tu cuenta para acceder a la plataforma de Graphite Technologies.
-              </p>
-            </div>
-
-            <div className="social-modal-body" style={{ paddingTop: '20px' }}>
-              {socialModal.step === 'credentials' && (
-                <form onSubmit={handleSocialSubmit}>
-                  <div className="form-group" style={{ marginBottom: '14px' }}>
-                    <label className="form-label" style={{ fontSize: '13px' }}>
-                      {socialModal.provider === 'Google' ? 'Correo electrónico o Gmail' : 'Correo electrónico o número de teléfono'}
-                    </label>
-                    <input 
-                      type="email" 
-                      className="form-input" 
-                      placeholder={socialModal.provider === 'Google' ? "ejemplo@gmail.com" : "usuario@email.com"}
-                      required
-                      value={socialModal.email}
-                      onChange={(e) => setSocialModal({ ...socialModal, email: e.target.value })}
-                      autoFocus
-                    />
-                  </div>
-
-                  <div className="form-group" style={{ marginBottom: '20px' }}>
-                    <label className="form-label" style={{ fontSize: '13px' }}>Contraseña de {socialModal.provider}</label>
-                    <input 
-                      type="password" 
-                      className="form-input" 
-                      placeholder="••••••••" 
-                      required
-                      value={socialModal.pass}
-                      onChange={(e) => setSocialModal({ ...socialModal, pass: e.target.value })}
-                    />
-                  </div>
-
-                  <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
-                    <button 
-                      type="button" 
-                      className="btn btn-secondary" 
-                      style={{ padding: '8px 16px', fontSize: '13px' }}
-                      onClick={() => setSocialModal({ ...socialModal, open: false })}
-                    >
-                      Cancelar
-                    </button>
-                    <button 
-                      type="submit" 
-                      className="btn btn-primary" 
-                      style={{ padding: '8px 20px', fontSize: '13px', backgroundColor: socialModal.provider === 'Facebook' ? '#1877F2' : 'var(--color-primary)' }}
-                    >
-                      Siguiente →
-                    </button>
-                  </div>
-                </form>
-              )}
-
-              {socialModal.step === 'loading' && (
-                <div style={{ textAlign: 'center', padding: '32px 0' }}>
-                  <div style={{ fontSize: '32px', marginBottom: '12px', animation: 'spin 1s infinite linear' }}>⏳</div>
-                  <p style={{ fontSize: '14px', fontWeight: 700 }}>Conectando con servidores de {socialModal.provider}...</p>
-                  <p style={{ fontSize: '12px', color: '#64748B', marginTop: '4px' }}>Estableciendo conexión segura cifrada TLS.</p>
-                </div>
-              )}
-
-              {socialModal.step === '2fa' && (
-                <div style={{ textAlign: 'center', padding: '10px 0' }}>
-                  <div style={{ width: '56px', height: '56px', borderRadius: '50%', backgroundColor: '#EFF6FF', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px auto' }}>
-                    <span style={{ fontSize: '28px' }}>📲</span>
-                  </div>
-                  <h3 style={{ fontSize: '17px', fontWeight: 800, color: '#0F172A', marginBottom: '8px' }}>
-                    {socialModal.provider === 'Google' ? '¿Sos vos el que intenta acceder?' : 'Confirmación de inicio de sesión'}
-                  </h3>
-                  <p style={{ fontSize: '13px', color: '#475569', lineHeight: 1.5, marginBottom: '20px' }}>
-                    {socialModal.provider === 'Google' ? (
-                      <>Google envió una notificación a tu teléfono vinculado para confirmar que <strong>{socialModal.email}</strong> es quien ingresa a Graphite Technologies.</>
-                    ) : (
-                      <>Facebook envió una alerta de seguridad con código de verificación para autorizar a <strong>{socialModal.email}</strong>.</>
-                    )}
-                  </p>
-
-                  <div style={{ backgroundColor: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '8px', padding: '12px', marginBottom: '20px', fontSize: '13px', color: '#334155' }}>
-                    🔔 <strong>Aprobá el cartel de seguridad en tu dispositivo móvil o tocá confirmar abajo:</strong>
-                  </div>
-
-                  <button 
-                    type="button" 
-                    className="btn btn-primary full-width" 
-                    style={{ padding: '12px', fontSize: '14px', backgroundColor: '#10B981' }}
-                    onClick={handleConfirmar2FA}
-                  >
-                    ✓ Sí, soy yo (Confirmar e Ingresar)
-                  </button>
-                </div>
-              )}
             </div>
           </div>
         </div>
@@ -781,10 +640,36 @@ export default function App() {
                 <div className="results-grid">
                   {resultados.map((sello) => {
                     const isSelected = sellosAComparar.some(s => s.id === sello.id);
+                    const isFav = favoritos.some(f => f.id === sello.id);
                     return (
                       <div key={sello.id} className="card-product" onClick={() => handleVerDetalle(sello)}>
-                        <div className="card-image-box">
+                        <div className="card-image-box" style={{ position: 'relative' }}>
                           <div className="badge-verified">✓ Matcheo 100%</div>
+                          <button 
+                            type="button"
+                            className="btn-fav-toggle"
+                            onClick={(e) => toggleFavorito(sello, e)}
+                            title={isFav ? "Quitar de Favoritos" : "Marcar como Favorito"}
+                            style={{
+                              position: 'absolute',
+                              top: '8px',
+                              right: '8px',
+                              background: isFav ? '#FEF2F2' : 'rgba(255, 255, 255, 0.92)',
+                              border: isFav ? '1px solid #F87171' : '1px solid #CBD5E1',
+                              borderRadius: '50%',
+                              width: '32px',
+                              height: '32px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              cursor: 'pointer',
+                              fontSize: '15px',
+                              zIndex: 10,
+                              boxShadow: '0 2px 6px rgba(0,0,0,0.1)'
+                            }}
+                          >
+                            {isFav ? '❤️' : '🤍'}
+                          </button>
                           <img src={sello.imagen} alt={sello.codigoEquivalente} className="card-seal-img" />
                         </div>
 
@@ -797,12 +682,25 @@ export default function App() {
                           <div className="card-spec">
                             <div className="spec-item"><span className="spec-label">Equivalencia:</span><span className="spec-val">{sello.equivalenteCompetidor}</span></div>
                             <div className="spec-item"><span className="spec-label">Bomba:</span><span className="spec-val">{sello.marcaBombaCompatible} - {sello.modeloBombaCompatible}</span></div>
-                            <div className="spec-item"><span className="spec-label">Eje / D3 / L3:</span><span className="spec-val">{sello.medidasDetalle || sello.diametroEje}</span></div>
+                            <div className="spec-item"><span className="spec-label">Medidas:</span><span className="spec-val">{sello.medidasDetalle || sello.diametroEje}</span></div>
                           </div>
 
-                          <div className="card-footer">
+                          <div className="card-footer" style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: '8px' }}>
                             <button className="btn btn-whatsapp full-width" onClick={(e) => { e.stopPropagation(); handleVerDetalle(sello); }}>
-                              🔍 Ver Ficha Técnica Dedicada
+                              🔍 Ver Ficha Técnica
+                            </button>
+                            <button 
+                              type="button"
+                              className="btn btn-secondary" 
+                              onClick={(e) => toggleFavorito(sello, e)}
+                              title={isFav ? "Quitar de Favoritos" : "Guardar en Favoritos"}
+                              style={{ 
+                                padding: '8px 12px',
+                                backgroundColor: isFav ? '#FEF2F2' : 'var(--color-bg-light)',
+                                borderColor: isFav ? '#FCA5A5' : 'var(--color-border)'
+                              }}
+                            >
+                              {isFav ? '⭐' : '☆'}
                             </button>
                           </div>
                         </div>
@@ -930,7 +828,7 @@ export default function App() {
                     ))}
                   </tr>
                   <tr>
-                    <td className="comparator-feature-lbl">📏 Medidas Calibre (d₁ / d₃ / L₃)</td>
+                    <td className="comparator-feature-lbl">📏 Medidas Calibre (Eje / Ext / Altura)</td>
                     {sellosAComparar.map(s => (
                       <td key={s.id}>{s.medidasDetalle || s.diametroEje}</td>
                     ))}
@@ -1050,12 +948,27 @@ export default function App() {
                   </div>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginTop: '16px' }}>
-                  <button className="btn btn-whatsapp" style={{ padding: '16px', fontSize: '15px' }} onClick={() => handleWhatsApp(selloSeleccionado)}>
-                    💬 Cotizar por WhatsApp (11 3813-4174)
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px', marginTop: '16px' }}>
+                  <button className="btn btn-whatsapp" style={{ padding: '15px 12px', fontSize: '14px' }} onClick={() => handleWhatsApp(selloSeleccionado)}>
+                    💬 Cotizar por WhatsApp
                   </button>
-                  <button className="btn btn-pdf" style={{ padding: '16px', fontSize: '15px' }} onClick={handleImprimirFichaPDF}>
-                    📄 Descargar / Imprimir Ficha PDF
+                  <button 
+                    type="button"
+                    className="btn btn-secondary" 
+                    style={{ 
+                      padding: '15px 12px', 
+                      fontSize: '14px', 
+                      backgroundColor: favoritos.some(f => f.id === selloSeleccionado.id) ? '#FEF2F2' : 'var(--color-bg-light)',
+                      borderColor: favoritos.some(f => f.id === selloSeleccionado.id) ? '#F87171' : 'var(--color-border)',
+                      color: favoritos.some(f => f.id === selloSeleccionado.id) ? '#B91C1C' : 'var(--color-text-main)',
+                      fontWeight: 700 
+                    }} 
+                    onClick={() => toggleFavorito(selloSeleccionado)}
+                  >
+                    {favoritos.some(f => f.id === selloSeleccionado.id) ? '❤️ En Favoritos' : '⭐ Marcar como Favorito'}
+                  </button>
+                  <button className="btn btn-pdf" style={{ padding: '15px 12px', fontSize: '14px' }} onClick={handleImprimirFichaPDF}>
+                    📄 Imprimir Ficha PDF
                   </button>
                 </div>
 
@@ -1070,7 +983,116 @@ export default function App() {
         </div>
       )}
 
-      {/* VISTA DEDICADA: MIS CONSULTAS GUARDADAS (CLIENTE PÚBLICO) */}
+      {/* VISTA DEDICADA: MIS SELLOS FAVORITOS (CLIENTE) */}
+      {currentView === 'favoritos' && (
+        <div className="results-page-wrapper">
+          <div className="container">
+            <span className="back-link" onClick={() => navegarA('home', 'home')}>
+              ← Volver al Buscador Principal
+            </span>
+
+            <div style={{ backgroundColor: 'white', borderRadius: '12px', padding: '32px', border: '1px solid var(--color-border)', boxShadow: 'var(--shadow-sm)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
+                <div>
+                  <h1 style={{ fontSize: '24px', fontWeight: 800, margin: 0 }}>⭐ Mis Sellos Favoritos ({favoritos.length})</h1>
+                  <p style={{ color: 'var(--color-text-muted)', fontSize: '14px', marginTop: '4px' }}>
+                    Repuestos que marcaste como favoritos para comparar, revisar o cotizar luego.
+                  </p>
+                </div>
+                {favoritos.length > 0 && (
+                  <button 
+                    type="button"
+                    className="btn btn-secondary" 
+                    style={{ fontSize: '12.5px', padding: '8px 14px', color: '#B91C1C', borderColor: '#FCA5A5' }}
+                    onClick={() => {
+                      if (window.confirm("¿Deseas vaciar tu lista de favoritos?")) {
+                        setFavoritos([]);
+                        localStorage.removeItem('graphite_favoritos');
+                      }
+                    }}
+                  >
+                    🗑️ Vaciar Favoritos
+                  </button>
+                )}
+              </div>
+
+              {favoritos.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '48px 20px', backgroundColor: 'var(--color-bg-light)', borderRadius: '8px', border: '1px dashed var(--color-border)' }}>
+                  <span style={{ fontSize: '44px' }}>⭐</span>
+                  <p style={{ fontSize: '16px', fontWeight: 700, marginTop: '12px', color: 'var(--color-text-main)' }}>
+                    No tenés sellos guardados en favoritos
+                  </p>
+                  <p style={{ fontSize: '14px', marginTop: '4px', color: 'var(--color-text-muted)', maxWidth: '440px', margin: '4px auto 16px auto' }}>
+                    Marcá con la estrella o el corazón cualquier repuesto del catálogo o del buscador para tenerlo a mano acá.
+                  </p>
+                  <button className="btn btn-primary" onClick={() => navegarA('resultados', 'resultados')}>
+                    🔍 Explorar Catálogo de Sellos
+                  </button>
+                </div>
+              ) : (
+                <div className="results-grid">
+                  {favoritos.map((sello) => (
+                    <div key={sello.id} className="card-product" onClick={() => handleVerDetalle(sello)}>
+                      <div className="card-image-box" style={{ position: 'relative' }}>
+                        <div className="badge-verified">✓ Matcheo 100%</div>
+                        <button 
+                          type="button"
+                          className="btn-fav-toggle"
+                          onClick={(e) => toggleFavorito(sello, e)}
+                          title="Quitar de Favoritos"
+                          style={{
+                            position: 'absolute',
+                            top: '8px',
+                            right: '8px',
+                            background: '#FEF2F2',
+                            border: '1px solid #F87171',
+                            borderRadius: '50%',
+                            width: '32px',
+                            height: '32px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            cursor: 'pointer',
+                            fontSize: '15px',
+                            zIndex: 10
+                          }}
+                        >
+                          ❤️
+                        </button>
+                        <img src={sello.imagen} alt={sello.codigoEquivalente} className="card-seal-img" />
+                      </div>
+
+                      <div className="card-body">
+                        <div style={{ marginBottom: '4px' }}>
+                          <div className="card-code">{sello.id}</div>
+                        </div>
+                        <h3 className="card-title">{sello.codigoEquivalente}</h3>
+                        
+                        <div className="card-spec">
+                          <div className="spec-item"><span className="spec-label">Equivalencia:</span><span className="spec-val">{sello.equivalenteCompetidor}</span></div>
+                          <div className="spec-item"><span className="spec-label">Bomba:</span><span className="spec-val">{sello.marcaBombaCompatible} - {sello.modeloBombaCompatible}</span></div>
+                          <div className="spec-item"><span className="spec-label">Medidas:</span><span className="spec-val">{sello.medidasDetalle || sello.diametroEje}</span></div>
+                        </div>
+
+                        <div className="card-footer" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                          <button className="btn btn-secondary full-width" style={{ padding: '8px', fontSize: '12px' }} onClick={(e) => { e.stopPropagation(); handleVerDetalle(sello); }}>
+                            🔍 Ver Ficha
+                          </button>
+                          <button className="btn btn-whatsapp full-width" style={{ padding: '8px', fontSize: '12px' }} onClick={(e) => { e.stopPropagation(); handleWhatsApp(sello); }}>
+                            💬 Cotizar
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* VISTA DEDICADA: MIS COTIZACIONES ENVIADAS (WHATSAPP) */}
       {currentView === 'mis-consultas' && (
         <div className="results-page-wrapper">
           <div className="container">
@@ -1081,9 +1103,9 @@ export default function App() {
             <div style={{ backgroundColor: 'white', borderRadius: '12px', padding: '32px', border: '1px solid var(--color-border)', boxShadow: 'var(--shadow-sm)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
                 <div>
-                  <h1 style={{ fontSize: '24px', fontWeight: 800 }}>📋 Mis Consultas & Repuestos Vistos</h1>
+                  <h1 style={{ fontSize: '24px', fontWeight: 800 }}>📋 Mis Cotizaciones Enviadas (WhatsApp)</h1>
                   <p style={{ color: 'var(--color-text-muted)', fontSize: '14px', marginTop: '4px' }}>
-                    Historial de compatibilidades y cotizaciones solicitadas por <strong>{userIdentity?.name || 'Cliente'}</strong>.
+                    Registro oficial de repuestos que derivaste a cotización con un asesor de <strong>Graphite Technologies</strong>.
                   </p>
                 </div>
                 <button className="btn btn-primary" onClick={() => navegarA('home', 'home')}>
@@ -1093,16 +1115,16 @@ export default function App() {
 
               {historialConsultasCliente.length === 0 ? (
                 <div style={{ textAlign: 'center', padding: '48px 20px', color: 'var(--color-text-muted)' }}>
-                  <span style={{ fontSize: '48px' }}>📂</span>
-                  <p style={{ fontSize: '16px', fontWeight: 700, marginTop: '12px' }}>Aún no tenés consultas guardadas en tu sesión.</p>
-                  <p style={{ fontSize: '14px', marginTop: '4px' }}>Realizá búsquedas en el catálogo para ver y cotizar sellos compatibles.</p>
+                  <span style={{ fontSize: '48px' }}>💬</span>
+                  <p style={{ fontSize: '16px', fontWeight: 700, marginTop: '12px', color: 'var(--color-text-main)' }}>Aún no enviaste cotizaciones por WhatsApp.</p>
+                  <p style={{ fontSize: '14px', marginTop: '4px' }}>Cuando encuentres un sello y toques "Cotizar por WhatsApp", se registrará en este historial.</p>
                 </div>
               ) : (
                 <div style={{ overflowX: 'auto' }}>
                   <table className="crm-table">
                     <thead>
                       <tr>
-                        <th>Fecha / ID</th>
+                        <th>Fecha / ID Cotización</th>
                         <th>Sello Mecánico</th>
                         <th>Bomba Compatible</th>
                         <th>Equivalencia</th>
@@ -1155,6 +1177,7 @@ export default function App() {
           </div>
         </div>
       )}
+
 
       {currentView === 'cuenta' && (
         <div className="results-page-wrapper">

@@ -475,7 +475,7 @@
           <div class="search-tabs" style="flex-wrap: wrap; gap: 8px;">
             <button class="tab-btn active" id="tabBombas" onclick="cambiarTab('bombas')">⚙️ Por Bomba</button>
             <button class="tab-btn" id="tabSellos" onclick="cambiarTab('sellos')">🏷️ Por Sello Competidor</button>
-            <button class="tab-btn" id="tabMedidas" onclick="cambiarTab('medidas')">📏 Por Medidas de Calibre (d₁, d₃, L₃)</button>
+            <button class="tab-btn" id="tabMedidas" onclick="cambiarTab('medidas')">📏 Por Medidas de Calibre</button>
           </div>
 
           <div class="form-grid-col" id="formBombas">
@@ -564,17 +564,17 @@
 
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
               <div class="form-group">
-                <label class="form-label">🎯 Diámetro de Eje <span style="color: var(--color-primary);">(d₁)</span></label>
+                <label class="form-label">🎯 Diámetro del Eje (mm)</label>
                 <input type="number" id="calibreD1" class="form-input" placeholder="Ej: 25 mm">
                 <span style="font-size: 11px; color: #64748B;">Diámetro interior fuelle</span>
               </div>
               <div class="form-group">
-                <label class="form-label">🔘 Diámetro Ext. Alojamiento <span style="color: #2563EB;">(d₃)</span></label>
+                <label class="form-label">🔘 Diámetro Ext. Alojamiento (mm)</label>
                 <input type="number" id="calibreD3" class="form-input" placeholder="Ej: 41 mm">
                 <span style="font-size: 11px; color: #64748B;">Pista fija exterior</span>
               </div>
               <div class="form-group">
-                <label class="form-label">📏 Longitud de Trabajo <span style="color: #059669;">(L₃)</span></label>
+                <label class="form-label">📏 Longitud de Trabajo / Altura (mm)</label>
                 <input type="number" id="calibreL3" class="form-input" placeholder="Ej: 35 mm">
                 <span style="font-size: 11px; color: #64748B;">Altura comprimido</span>
               </div>
@@ -927,23 +927,6 @@
           ¿No tenés cuenta creada? Podés elegir esta opción para ingresar o registrarte directamente.
         </p>
 
-        <!-- Botones de Acceso Rápido Demo para los 3 perfiles -->
-        <div style="margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--color-border); background-color: #F8FAFC; padding: 14px; border-radius: 8px;">
-          <span style="font-size: 11px; font-weight: 800; text-transform: uppercase; color: var(--color-text-muted); display: block; margin-bottom: 8px; textAlign: center;">
-            ⚡ Acceso Rápido de Prueba (Demo de Perfiles):
-          </span>
-          <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px;">
-            <button type="button" class="btn btn-secondary" style="padding: 8px 4px; font-size: 11px; border: 1px solid #FCA5A5; color: #991B1B; background-color: #FEF2F2; font-weight: 700;" onclick="loginRapidoDemo('admin')">
-              👑 Admin
-            </button>
-            <button type="button" class="btn btn-secondary" style="padding: 8px 4px; font-size: 11px; border: 1px solid #93C5FD; color: #1E40AF; background-color: #EFF6FF; font-weight: 700;" onclick="loginRapidoDemo('vendedor')">
-              👔 Vendedor
-            </button>
-            <button type="button" class="btn btn-secondary" style="padding: 8px 4px; font-size: 11px; border: 1px solid #CBD5E1; color: #334155; background-color: #FFFFFF; font-weight: 700;" onclick="loginRapidoDemo('cliente')">
-              👤 Cliente
-            </button>
-          </div>
-        </div>
       </div>
     </div>
   </div>
