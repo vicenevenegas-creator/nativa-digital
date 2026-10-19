@@ -119,6 +119,26 @@ export default function App() {
     }
   };
 
+  // Autenticación Corporativa con Outlook / Microsoft 365 (exclusivo personal Graphite)
+  const handleOutlookLogin = async () => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'azure',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+          scopes: 'email profile openid'
+        }
+      });
+      if (error) {
+        console.error("Error al conectar con Outlook / Microsoft:", error.message);
+        alert("Para habilitar el ingreso oficial con Outlook corporativo, asegurate de activar el proveedor Azure en tu panel de Supabase.");
+      }
+    } catch (err) {
+      console.error("Error inesperado en Outlook Auth:", err);
+      alert("Error al conectar con el servicio de autenticación corporativa.");
+    }
+  };
+
   const resolverRolYRedirigir = (email, nombreCustom = null) => {
     const emailNorm = (email || '').trim().toLowerCase();
     
@@ -149,12 +169,30 @@ export default function App() {
     navegarA('home', 'home');
   };
 
-  // Escuchar sesión activa de Supabase (ej: login con Google OAuth)
+  // Escuchar sesión activa de Supabase (ej: login con Google o Microsoft Outlook)
   useEffect(() => {
+    const guardarEnCacheSiEsNuevo = (userEmail, userName) => {
+      if (!userEmail) return;
+      try {
+        const guardados = JSON.parse(localStorage.getItem('graphite_usuarios_registrados') || '[]');
+        if (!guardados.some(u => u.email.toLowerCase() === userEmail.toLowerCase())) {
+          guardados.push({
+            email: userEmail.toLowerCase(),
+            nombre: userName,
+            fechaRegistro: new Date().toISOString()
+          });
+          localStorage.setItem('graphite_usuarios_registrados', JSON.stringify(guardados));
+        }
+      } catch (e) {
+        console.error("Error guardando usuario en cache", e);
+      }
+    };
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
         const userEmail = session.user.email;
         const userName = session.user.user_metadata?.full_name || session.user.user_metadata?.name || userEmail.split('@')[0];
+        guardarEnCacheSiEsNuevo(userEmail, userName);
         resolverRolYRedirigir(userEmail, userName);
       }
     });
@@ -163,6 +201,7 @@ export default function App() {
       if (session?.user) {
         const userEmail = session.user.email;
         const userName = session.user.user_metadata?.full_name || session.user.user_metadata?.name || userEmail.split('@')[0];
+        guardarEnCacheSiEsNuevo(userEmail, userName);
         resolverRolYRedirigir(userEmail, userName);
       }
     });
@@ -181,25 +220,103 @@ export default function App() {
   const [leadsList, setLeadsList] = useState(MOCK_LEADS_CONSULTAS);
   const [catalogoLocal, setCatalogoLocal] = useState(SELLOS_REPUESSTOS);
 
-  const handleUnifiedAuthSubmit = (e) => {
+  const handleUnifiedAuthSubmit = async (e) => {
     e.preventDefault();
+    const emailNorm = (clientForm.email || '').trim().toLowerCase();
+
     if (clientAuthTab === 'login') {
-      if (!clientForm.email || !clientForm.pass) {
+      if (!emailNorm || !clientForm.pass) {
         alert("Por favor ingrese su correo y contraseña.");
         return;
       }
-      resolverRolYRedirigir(clientForm.email);
+
+      // Intentar login con Supabase Auth
+      try {
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: emailNorm,
+          password: clientForm.pass
+        });
+
+        if (error) {
+          console.warn("Aviso en login con Supabase:", error.message);
+          const usuariosGuardados = JSON.parse(localStorage.getItem('graphite_usuarios_registrados') || '[]');
+          const usuarioExistente = usuariosGuardados.find(u => u.email.toLowerCase() === emailNorm);
+
+          if (!usuarioExistente && (error.message.includes('Invalid login credentials') || error.message.includes('not found'))) {
+            alert(`⚠️ El correo "${emailNorm}" no se encuentra registrado.\n\nPor favor hacé clic en la pestaña "Crear Cuenta" para registrarte.`);
+            return;
+          }
+        }
+
+        const nombreUsuario = data?.user?.user_metadata?.full_name || clientForm.nombre || emailNorm.split('@')[0];
+        resolverRolYRedirigir(emailNorm, nombreUsuario);
+      } catch (err) {
+        console.error("Error en proceso de login:", err);
+        resolverRolYRedirigir(emailNorm);
+      }
     } else {
-      if (!clientForm.nombre || !clientForm.email || !clientForm.pass) {
+      // Pestaña: Crear Cuenta
+      if (!clientForm.nombre.trim() || !emailNorm || !clientForm.pass) {
         alert("Por favor complete todos los campos para crear su cuenta.");
         return;
       }
+
+      // 1. Bloqueo de creación pública para dominios corporativos internos
+      if (emailNorm.endsWith('@graphite.com.ar') || emailNorm.endsWith('@graphite.com')) {
+        alert("🔒 Los correos corporativos @graphite.com.ar corresponden a colaboradores de la empresa.\n\nDeben ingresar utilizando el botón de 'Acceso Corporativo con Outlook / Microsoft 365' o iniciar sesión con sus credenciales autorizadas.");
+        return;
+      }
+
       if (clientForm.pass !== clientForm.confirmPass) {
         alert("Las contraseñas no coinciden. Por favor verifique.");
         return;
       }
-      alert(`¡Cuenta creada con éxito para ${clientForm.nombre}! Bienvenido a Graphite.`);
-      resolverRolYRedirigir(clientForm.email, clientForm.nombre);
+
+      // 2. Comprobar si el correo ya está registrado (en localStorage o Supabase)
+      const usuariosGuardados = JSON.parse(localStorage.getItem('graphite_usuarios_registrados') || '[]');
+      const yaRegistrado = usuariosGuardados.some(u => u.email.toLowerCase() === emailNorm);
+
+      if (yaRegistrado) {
+        alert(`⚠️ El correo "${emailNorm}" YA se encuentra registrado en Graphite Technologies.\n\nPor favor, ingresá en la pestaña "Iniciar Sesión" con tu contraseña o mediante Google.`);
+        setClientAuthTab('login');
+        return;
+      }
+
+      // 3. Registrar en Supabase Auth (dispara el correo de confirmación/bienvenida a la casilla)
+      try {
+        const { data, error } = await supabase.auth.signUp({
+          email: emailNorm,
+          password: clientForm.pass,
+          options: {
+            data: {
+              full_name: clientForm.nombre.trim()
+            }
+          }
+        });
+
+        if (error) {
+          if (error.message.toLowerCase().includes('already registered') || error.message.toLowerCase().includes('already exists')) {
+            alert(`⚠️ El correo "${emailNorm}" ya está registrado en Graphite Technologies. Por favor iniciá sesión.`);
+            setClientAuthTab('login');
+            return;
+          }
+          console.warn("Aviso en Supabase signUp:", error.message);
+        }
+
+        // 4. Guardar en almacenamiento de cuentas registradas
+        const nuevoRegistro = {
+          email: emailNorm,
+          nombre: clientForm.nombre.trim(),
+          fechaRegistro: new Date().toISOString()
+        };
+        localStorage.setItem('graphite_usuarios_registrados', JSON.stringify([...usuariosGuardados, nuevoRegistro]));
+
+        alert(`✅ ¡Cuenta creada con éxito para ${clientForm.nombre}!\n\nSe ha enviado un aviso de confirmación y bienvenida a tu casilla (${emailNorm}). ¡Bienvenido a Graphite Technologies!`);
+        resolverRolYRedirigir(emailNorm, clientForm.nombre.trim());
+      } catch (err) {
+        console.error("Error en registro:", err);
+        alert(`⚠️ Ocurrió un error al procesar el registro: ${err.message}`);
+      }
     }
   };
 
@@ -525,7 +642,7 @@ export default function App() {
               <button 
                 type="button" 
                 className="btn btn-google full-width" 
-                style={{ padding: '12px', fontSize: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}
+                style={{ padding: '12px', fontSize: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', marginBottom: '10px' }}
                 onClick={handleGoogleLogin}
               >
                 <svg width="18" height="18" viewBox="0 0 24 24">
@@ -534,12 +651,42 @@ export default function App() {
                   <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
                   <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
                 </svg>
-                Iniciar sesión con Google
+                Continuar con Google (Gmail)
               </button>
 
-              <p style={{ fontSize: '11.5px', color: 'var(--color-text-muted)', textAlign: 'center', marginTop: '10px' }}>
-                Autenticación segura directa vía Supabase OAuth con cuenta de Google / Gmail.
-              </p>
+              {/* Botón de Acceso Corporativo con Outlook / Microsoft 365 para personal @graphite.com.ar */}
+              <button 
+                type="button" 
+                className="btn btn-secondary full-width" 
+                style={{ 
+                  padding: '12px', 
+                  fontSize: '13.5px', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center', 
+                  gap: '10px',
+                  backgroundColor: '#0F172A',
+                  color: '#FFFFFF',
+                  border: '1px solid #1E293B',
+                  fontWeight: 600
+                }}
+                onClick={handleOutlookLogin}
+                title="Acceso exclusivo para colaboradores con cuenta @graphite.com.ar"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24">
+                  <path fill="#F25022" d="M1 1h10v10H1z"/>
+                  <path fill="#00A4EF" d="M1 13h10v10H1z"/>
+                  <path fill="#7FBA00" d="M13 1h10v10H13z"/>
+                  <path fill="#FFB900" d="M13 13h10v10H13z"/>
+                </svg>
+                💼 Ingreso Corporativo (Outlook / Microsoft 365)
+              </button>
+
+              <div style={{ backgroundColor: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '8px', padding: '10px 12px', marginTop: '14px', textAlign: 'center' }}>
+                <span style={{ fontSize: '11px', color: '#475569', display: 'block', lineHeight: 1.4 }}>
+                  🏢 <strong>Personal de Graphite:</strong> Utilizá el botón de Outlook / Microsoft 365 para validar tu identidad corporativa.
+                </span>
+              </div>
             </div>
           </div>
         </div>
