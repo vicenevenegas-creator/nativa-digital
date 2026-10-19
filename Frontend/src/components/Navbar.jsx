@@ -1,6 +1,8 @@
 import React from 'react';
 
-export default function Navbar({ currentTab, setCurrentTab, userIdentity, onChangeAccess }) {
+export default function Navbar({ currentTab, setCurrentTab, userIdentity, onChangeAccess, currentView }) {
+  const isAuthView = currentView === 'acceso' || currentView === 'cliente-auth' || currentView === 'empresa-login';
+
   return (
     <nav className="navbar">
       <div className="container navbar-content">
@@ -34,7 +36,7 @@ export default function Navbar({ currentTab, setCurrentTab, userIdentity, onChan
                   Catálogo de Sellos
                 </a>
               </li>
-              {userIdentity.role === 'public' && (
+              {userIdentity.role === 'cliente' && (
                 <li>
                   <a 
                     href="#mis-consultas" 
@@ -45,33 +47,58 @@ export default function Navbar({ currentTab, setCurrentTab, userIdentity, onChan
                   </a>
                 </li>
               )}
-              {userIdentity.role === 'empresa' && (
+              {(userIdentity.role === 'vendedor' || userIdentity.role === 'admin') && (
                 <li>
                   <a 
                     href="#empresa" 
                     className={`nav-link ${currentTab === 'empresa' ? 'active' : ''}`}
                     onClick={(e) => { e.preventDefault(); setCurrentTab('empresa'); }}
                   >
-                    🔒 Panel Interno Empresa
+                    {userIdentity.role === 'admin' ? '👑 Panel de Control Admin' : '🔒 Panel de Ventas CRM'}
                   </a>
                 </li>
               )}
             </ul>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <span style={{ fontSize: '14px', fontWeight: 700, color: 'var(--color-text-main)', backgroundColor: 'var(--color-bg-light)', padding: '6px 14px', borderRadius: 'var(--radius-pill)', border: '1px solid var(--color-border)' }}>
-                {userIdentity.role === 'empresa' ? '🔒' : '👤'} {userIdentity.name}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0, whiteSpace: 'nowrap' }}>
+              <span style={{ 
+                fontSize: '13px', 
+                fontWeight: 700, 
+                color: userIdentity.role === 'admin' ? '#991B1B' : (userIdentity.role === 'vendedor' ? '#1E40AF' : 'var(--color-text-main)'), 
+                backgroundColor: userIdentity.role === 'admin' ? '#FEE2E2' : (userIdentity.role === 'vendedor' ? '#DBEAFE' : 'var(--color-bg-light)'), 
+                padding: '7px 14px', 
+                borderRadius: 'var(--radius-pill)', 
+                border: '1px solid var(--color-border)',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                whiteSpace: 'nowrap',
+                flexShrink: 0
+              }}>
+                <span>
+                  {userIdentity.role === 'admin' && '👑 Admin: '}
+                  {userIdentity.role === 'vendedor' && '👔 Vendedor: '}
+                  {userIdentity.role === 'cliente' && '👤 '}
+                </span>
+                <span>{userIdentity.name}</span>
               </span>
 
-              <button className="btn btn-secondary" style={{ padding: '8px 14px', fontSize: '13px' }} onClick={onChangeAccess}>
-                🔄 Cambiar Portal
+              <button 
+                className="btn btn-secondary" 
+                style={{ padding: '7px 14px', fontSize: '13px', whiteSpace: 'nowrap', flexShrink: 0 }} 
+                onClick={onChangeAccess} 
+                title="Cerrar sesión o cambiar de perfil"
+              >
+                🚪 Cerrar Sesión
               </button>
             </div>
           </>
         ) : (
-          <button className="btn btn-primary" onClick={onChangeAccess}>
-            🔑 Seleccionar Portal de Ingreso
-          </button>
+          !isAuthView && (
+            <button className="btn btn-primary" style={{ whiteSpace: 'nowrap', flexShrink: 0 }} onClick={onChangeAccess}>
+              🔑 Iniciar Sesión / Registrarse
+            </button>
+          )
         )}
       </div>
     </nav>

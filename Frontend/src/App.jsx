@@ -114,30 +114,67 @@ export default function App() {
     }, 800);
   };
 
-  const handleConfirmar2FA = () => {
-    const displayNombre = socialModal.email.split('@')[0] || (socialModal.provider === 'Google' ? 'Usuario Gmail' : 'Usuario Facebook');
-    setUserIdentity({ role: 'public', name: displayNombre });
-    setSocialModal({ open: false, provider: 'Google', step: 'credentials', email: '', pass: '' });
+  const resolverRolYRedirigir = (email, nombreCustom = null) => {
+    const emailNorm = (email || '').trim().toLowerCase();
+    
+    // 1. Administrador General (martin.hellwing@graphite.com)
+    if (emailNorm.startsWith('martin.hellwing@graphite.com')) {
+      const identity = { role: 'admin', name: nombreCustom || 'Martín Hellwing', email: emailNorm };
+      setUserIdentity(identity);
+      setIsEmpresaLoggedIn(true);
+      navegarA('empresa', 'empresa');
+      return;
+    }
+    
+    // 2. Vendedor / Cotizador (@graphite.com o @graphite.com.ar)
+    if (emailNorm.endsWith('@graphite.com') || emailNorm.endsWith('@graphite.com.ar')) {
+      const display = nombreCustom || emailNorm.split('@')[0];
+      const identity = { role: 'vendedor', name: display, email: emailNorm };
+      setUserIdentity(identity);
+      setIsEmpresaLoggedIn(true);
+      navegarA('empresa', 'empresa');
+      return;
+    }
+    
+    // 3. Cliente / Comprador (cualquier otro correo)
+    const displayName = nombreCustom || emailNorm.split('@')[0] || 'Cliente';
+    const identity = { role: 'cliente', name: displayName, email: emailNorm };
+    setUserIdentity(identity);
+    setIsEmpresaLoggedIn(false);
     navegarA('home', 'home');
   };
 
+  const handleConfirmar2FA = () => {
+    resolverRolYRedirigir(socialModal.email);
+    setSocialModal({ open: false, provider: 'Google', step: 'credentials', email: '', pass: '' });
+  };
+
+  const handleFastLogin = (rol) => {
+    if (rol === 'admin') {
+      resolverRolYRedirigir('martin.hellwing@graphite.com', 'Martín Hellwing');
+    } else if (rol === 'vendedor') {
+      resolverRolYRedirigir('vendedor@graphite.com', 'Cotizador Técnico');
+    } else {
+      resolverRolYRedirigir('comprador@industria.com', 'Ing. Carlos Pérez');
+    }
+  };
 
   // Estado para el panel de empresa
   const [isEmpresaLoggedIn, setIsEmpresaLoggedIn] = useState(false);
   const [empresaEmail, setEmpresaEmail] = useState('');
   const [empresaPass, setEmpresaPass] = useState('');
-  const [empresaSubTab, setEmpresaSubTab] = useState('leads'); // 'leads' | 'carga' | 'calibre'
+  const [empresaSubTab, setEmpresaSubTab] = useState('leads'); // 'leads' | 'carga' | 'metricas'
   const [leadsList, setLeadsList] = useState(MOCK_LEADS_CONSULTAS);
   const [catalogoLocal, setCatalogoLocal] = useState(SELLOS_REPUESSTOS);
 
-  const handleClienteAuthSubmit = (e) => {
+  const handleUnifiedAuthSubmit = (e) => {
     e.preventDefault();
     if (clientAuthTab === 'login') {
       if (!clientForm.email || !clientForm.pass) {
         alert("Por favor ingrese su correo y contraseña.");
         return;
       }
-      setUserIdentity({ role: 'public', name: clientForm.email.split('@')[0] });
+      resolverRolYRedirigir(clientForm.email);
     } else {
       if (!clientForm.nombre || !clientForm.email || !clientForm.pass) {
         alert("Por favor complete todos los campos para crear su cuenta.");
@@ -148,9 +185,8 @@ export default function App() {
         return;
       }
       alert(`¡Cuenta creada con éxito para ${clientForm.nombre}! Bienvenido a Graphite.`);
-      setUserIdentity({ role: 'public', name: clientForm.nombre });
+      resolverRolYRedirigir(clientForm.email, clientForm.nombre);
     }
-    navegarA('home', 'home');
   };
 
   // Formulario nuevo repuesto
@@ -351,6 +387,7 @@ export default function App() {
           navegarA(tab, tab);
         }}
         userIdentity={userIdentity}
+        currentView={currentView}
         onChangeAccess={() => {
           setUserIdentity(null);
           setIsEmpresaLoggedIn(false);
@@ -358,154 +395,168 @@ export default function App() {
         }}
       />
 
-      {currentView === 'acceso' && (
-        <div className="results-page-wrapper" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 'calc(100vh - 80px)' }}>
-          <div className="container" style={{ maxWidth: '800px', width: '100%' }}>
-            <div style={{ textAlign: 'center', marginBottom: '40px' }}>
-              <h1 style={{ fontSize: '32px', fontWeight: 800, marginBottom: '16px' }}>Bienvenido a Graphite Technologies</h1>
-              <p style={{ fontSize: '18px', color: 'var(--color-text-muted)' }}>Por favor, seleccione su portal de ingreso para continuar.</p>
-            </div>
-            
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
-              <div 
-                className="card-product" 
-                style={{ padding: '40px 24px', textAlign: 'center', cursor: 'pointer', transition: 'transform 0.2s', display: 'flex', flexDirection: 'column', alignItems: 'center' }}
-                onClick={() => {
-                  navegarA('cliente-auth');
-                }}
-              >
-                <div style={{ fontSize: '48px', marginBottom: '20px' }}>👤</div>
-                <h2 style={{ fontSize: '24px', fontWeight: 700, marginBottom: '12px' }}>Acceso Público</h2>
-                <p style={{ color: 'var(--color-text-muted)', marginBottom: '24px' }}>
-                  Para clientes y compradores. Inicie sesión o cree su cuenta para consultar y cotizar.
+      {(currentView === 'acceso' || currentView === 'cliente-auth' || currentView === 'empresa-login') && (
+        <div className="auth-page-wrapper">
+          <div className="auth-bg-motion"></div>
+          <div className="auth-card-container">
+            <div style={{ backgroundColor: 'white', padding: '36px', borderRadius: '16px', border: '1px solid var(--color-border)', boxShadow: '0 25px 60px rgba(0,0,0,0.5)' }}>
+              <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+                <img 
+                  src="https://graphite.com.ar/wp-content/uploads/2019/01/cropped-fav-graphite-192x192.png" 
+                  alt="Graphite Logo" 
+                  style={{ width: '52px', height: '52px', marginBottom: '8px' }} 
+                />
+                <h1 style={{ fontSize: '22px', fontWeight: 800, color: 'var(--color-text-main)', margin: '4px 0' }}>
+                  GRAPHITE TECHNOLOGIES
+                </h1>
+                <p style={{ fontSize: '13px', color: 'var(--color-text-muted)' }}>
+                  Ingreso Unificado · Detección Inteligente de Perfil
                 </p>
-                <button className="btn btn-primary full-width" style={{ marginTop: 'auto' }}>
-                  Ingresar como Cliente
+              </div>
+
+              {/* Tabs Iniciar Sesión / Crear Cuenta */}
+              <div className="search-tabs" style={{ marginBottom: '18px' }}>
+                <button 
+                  type="button" 
+                  className={`tab-btn ${clientAuthTab === 'login' ? 'active' : ''}`}
+                  onClick={() => setClientAuthTab('login')}
+                  style={{ flex: 1, textAlign: 'center' }}
+                >
+                  Iniciar Sesión
+                </button>
+                <button 
+                  type="button" 
+                  className={`tab-btn ${clientAuthTab === 'register' ? 'active' : ''}`}
+                  onClick={() => setClientAuthTab('register')}
+                  style={{ flex: 1, textAlign: 'center' }}
+                >
+                  Crear Cuenta
                 </button>
               </div>
 
-              <div 
-                className="card-product" 
-                style={{ padding: '40px 24px', textAlign: 'center', cursor: 'pointer', transition: 'transform 0.2s', display: 'flex', flexDirection: 'column', alignItems: 'center', border: '2px solid var(--color-primary)' }}
-                onClick={() => {
-                  navegarA('empresa-login');
-                }}
-              >
-                <div style={{ fontSize: '48px', marginBottom: '20px' }}>🔒</div>
-                <h2 style={{ fontSize: '24px', fontWeight: 700, marginBottom: '12px' }}>Acceso Empresa</h2>
-                <p style={{ color: 'var(--color-text-muted)', marginBottom: '24px' }}>
-                  Para cotizadores y vendedores con correo institucional @graphite.com.ar.
-                </p>
-                <button className="btn btn-secondary full-width" style={{ marginTop: 'auto' }}>
-                  Ingresar al Panel Interno
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+              <form onSubmit={handleUnifiedAuthSubmit}>
+                {clientAuthTab === 'register' && (
+                  <div className="form-group" style={{ marginBottom: '14px' }}>
+                    <label className="form-label">Nombre Completo o Razón Social *</label>
+                    <input 
+                      type="text" 
+                      className="form-input" 
+                      placeholder="Ej: Juan Pérez / Metalúrgica Sur"
+                      value={clientForm.nombre}
+                      onChange={(e) => setClientForm({ ...clientForm, nombre: e.target.value })}
+                    />
+                  </div>
+                )}
 
-      {/* VISTA DEDICADA: AUTENTICACIÓN CLIENTES (INICIAR SESIÓN / CREAR CUENTA) */}
-      {currentView === 'cliente-auth' && (
-        <div className="results-page-wrapper" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 'calc(100vh - 80px)', padding: '40px 20px' }}>
-          <div style={{ maxWidth: '460px', width: '100%', backgroundColor: 'white', padding: '36px', borderRadius: '12px', border: '1px solid var(--color-border)', boxShadow: 'var(--shadow-md)' }}>
-            <span className="back-link" style={{ marginBottom: '16px', display: 'inline-block' }} onClick={() => navegarA('acceso', 'acceso')}>
-              ← Volver a selección de portal
-            </span>
-            <div style={{ textAlign: 'center', marginBottom: '20px' }}>
-              <span style={{ fontSize: '32px' }}>👤</span>
-              <h2 style={{ fontSize: '22px', fontWeight: 800, marginTop: '8px' }}>Portal Clientes Graphite</h2>
-              <p style={{ fontSize: '13px', color: 'var(--color-text-muted)' }}>Acceda a compatibilidades verificadas, fichas técnicas y cotizaciones</p>
-            </div>
-
-            <div className="search-tabs" style={{ marginBottom: '20px' }}>
-              <button 
-                type="button"
-                className={`tab-btn ${clientAuthTab === 'login' ? 'active' : ''}`}
-                onClick={() => setClientAuthTab('login')}
-              >
-                Iniciar Sesión
-              </button>
-              <button 
-                type="button"
-                className={`tab-btn ${clientAuthTab === 'register' ? 'active' : ''}`}
-                onClick={() => setClientAuthTab('register')}
-              >
-                Crear Cuenta
-              </button>
-            </div>
-
-            <form onSubmit={handleClienteAuthSubmit}>
-              {clientAuthTab === 'register' && (
                 <div className="form-group" style={{ marginBottom: '14px' }}>
-                  <label className="form-label">Nombre Completo o Empresa *</label>
+                  <label className="form-label">Correo Electrónico *</label>
                   <input 
-                    type="text" 
+                    type="email" 
                     className="form-input" 
-                    placeholder="Ej: Juan Pérez / Metalúrgica Sur"
-                    value={clientForm.nombre}
-                    onChange={(e) => setClientForm({ ...clientForm, nombre: e.target.value })}
+                    placeholder="martin.hellwing@graphite.com / cotizador@... / cliente@..."
+                    value={clientForm.email}
+                    onChange={(e) => setClientForm({ ...clientForm, email: e.target.value })}
+                    required
                   />
+                  <span style={{ fontSize: '11px', color: 'var(--color-text-muted)', marginTop: '2px' }}>
+                    El sistema detectará si sos Cliente, Vendedor (@graphite.com) o Administrador.
+                  </span>
                 </div>
-              )}
 
-              <div className="form-group" style={{ marginBottom: '14px' }}>
-                <label className="form-label">Correo Electrónico *</label>
-                <input 
-                  type="email" 
-                  className="form-input" 
-                  placeholder="tu.mail@empresa.com"
-                  value={clientForm.email}
-                  onChange={(e) => setClientForm({ ...clientForm, email: e.target.value })}
-                />
-              </div>
-
-              <div className="form-group" style={{ marginBottom: '14px' }}>
-                <label className="form-label">Contraseña *</label>
-                <input 
-                  type="password" 
-                  className="form-input" 
-                  placeholder="••••••••"
-                  value={clientForm.pass}
-                  onChange={(e) => setClientForm({ ...clientForm, pass: e.target.value })}
-                />
-              </div>
-
-              {clientAuthTab === 'register' && (
-                <div className="form-group" style={{ marginBottom: '20px' }}>
-                  <label className="form-label">Confirmar Contraseña *</label>
+                <div className="form-group" style={{ marginBottom: clientAuthTab === 'register' ? '14px' : '20px' }}>
+                  <label className="form-label">Contraseña *</label>
                   <input 
                     type="password" 
                     className="form-input" 
                     placeholder="••••••••"
-                    value={clientForm.confirmPass}
-                    onChange={(e) => setClientForm({ ...clientForm, confirmPass: e.target.value })}
+                    value={clientForm.pass}
+                    onChange={(e) => setClientForm({ ...clientForm, pass: e.target.value })}
+                    required
                   />
                 </div>
-              )}
 
-              <button type="submit" className="btn btn-primary full-width" style={{ padding: '14px', marginBottom: '16px' }}>
-                {clientAuthTab === 'login' ? '🔑 Iniciar Sesión' : '✨ Crear Cuenta e Ingresar'}
-              </button>
-            </form>
+                {clientAuthTab === 'register' && (
+                  <div className="form-group" style={{ marginBottom: '20px' }}>
+                    <label className="form-label">Confirmar Contraseña *</label>
+                    <input 
+                      type="password" 
+                      className="form-input" 
+                      placeholder="••••••••"
+                      value={clientForm.confirmPass}
+                      onChange={(e) => setClientForm({ ...clientForm, confirmPass: e.target.value })}
+                      required
+                    />
+                  </div>
+                )}
 
-            <div style={{ borderTop: '1px solid var(--color-border)', paddingTop: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <button type="submit" className="btn btn-primary full-width" style={{ padding: '14px' }}>
+                  {clientAuthTab === 'login' ? '🔑 Iniciar Sesión' : '✨ Crear Cuenta e Ingresar'}
+                </button>
+              </form>
+
+              {/* Opción de Google / Gmail abajo del formulario */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', margin: '20px 0 14px 0' }}>
+                <div style={{ flex: 1, height: '1px', backgroundColor: 'var(--color-border)' }}></div>
+                <span style={{ fontSize: '11px', color: 'var(--color-text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>
+                  o continuar con
+                </span>
+                <div style={{ flex: 1, height: '1px', backgroundColor: 'var(--color-border)' }}></div>
+              </div>
+
               <button 
-                type="button"
+                type="button" 
                 className="btn btn-google full-width" 
-                style={{ padding: '10px', fontSize: '13px' }}
+                style={{ padding: '12px', fontSize: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}
                 onClick={() => abrirModalSocial('Google')}
               >
-                <span>🔴</span> Continuar con Google (Gmail)
+                <svg width="18" height="18" viewBox="0 0 24 24">
+                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+                </svg>
+                {clientAuthTab === 'register' ? 'Crear cuenta con Google (Gmail)' : 'Continuar con Google (Gmail)'}
               </button>
-              <button 
-                type="button"
-                className="btn btn-facebook full-width" 
-                style={{ padding: '10px', fontSize: '13px' }}
-                onClick={() => abrirModalSocial('Facebook')}
-              >
-                <span>🔵</span> Continuar con Facebook
-              </button>
+
+              <p style={{ fontSize: '11.5px', color: 'var(--color-text-muted)', textAlign: 'center', marginTop: '8px' }}>
+                ¿No tenés cuenta creada? Podés elegir esta opción para ingresar o registrarte directamente.
+              </p>
+
+              {/* Botones de Acceso Rápido Demo para los 3 perfiles */}
+              <div style={{ marginTop: '20px', paddingTop: '16px', borderTop: '1px solid var(--color-border)', backgroundColor: '#F8FAFC', padding: '14px', borderRadius: '8px' }}>
+                <span style={{ fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', color: 'var(--color-text-muted)', display: 'block', marginBottom: '8px', textAlign: 'center' }}>
+                  ⚡ Acceso Rápido de Prueba (Demo de Perfiles):
+                </span>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '6px' }}>
+                  <button 
+                    type="button" 
+                    className="btn btn-secondary" 
+                    style={{ padding: '8px 4px', fontSize: '11px', border: '1px solid #FCA5A5', color: '#991B1B', backgroundColor: '#FEF2F2', fontWeight: 700 }}
+                    onClick={() => handleFastLogin('admin')}
+                    title="martin.hellwing@graphite.com"
+                  >
+                    👑 Admin
+                  </button>
+                  <button 
+                    type="button" 
+                    className="btn btn-secondary" 
+                    style={{ padding: '8px 4px', fontSize: '11px', border: '1px solid #93C5FD', color: '#1E40AF', backgroundColor: '#EFF6FF', fontWeight: 700 }}
+                    onClick={() => handleFastLogin('vendedor')}
+                    title="vendedor@graphite.com"
+                  >
+                    👔 Vendedor
+                  </button>
+                  <button 
+                    type="button" 
+                    className="btn btn-secondary" 
+                    style={{ padding: '8px 4px', fontSize: '11px', border: '1px solid #CBD5E1', color: '#334155', backgroundColor: '#FFFFFF', fontWeight: 700 }}
+                    onClick={() => handleFastLogin('cliente')}
+                    title="cliente@industria.com"
+                  >
+                    👤 Cliente
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -635,49 +686,7 @@ export default function App() {
         </div>
       )}
 
-      {/* VISTA DEDICADA: LOGIN INSTITUCIONAL EMPRESA */}
-      {currentView === 'empresa-login' && (
-        <div className="results-page-wrapper" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 'calc(100vh - 80px)', padding: '40px 20px' }}>
-          <div style={{ maxWidth: '440px', width: '100%', backgroundColor: 'white', padding: '36px', borderRadius: '12px', border: '1px solid var(--color-border)', boxShadow: 'var(--shadow-md)' }}>
-            <span className="back-link" style={{ marginBottom: '16px', display: 'inline-block' }} onClick={() => navegarA('acceso', 'acceso')}>
-              ← Volver a selección de portal
-            </span>
-            <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-              <span style={{ fontSize: '32px' }}>🔒</span>
-              <h2 style={{ fontSize: '22px', fontWeight: 800, marginTop: '8px' }}>Acceso Empresa Graphite</h2>
-              <p style={{ fontSize: '13px', color: 'var(--color-text-muted)' }}>Módulo exclusivo para personal institucional @graphite.com.ar</p>
-            </div>
 
-            <form onSubmit={handleLoginEmpresa}>
-              <div className="form-group" style={{ marginBottom: '16px' }}>
-                <label className="form-label">Correo Institucional</label>
-                <input 
-                  type="email" 
-                  className="form-input" 
-                  placeholder="vendedor@graphite.com.ar"
-                  value={empresaEmail}
-                  onChange={(e) => setEmpresaEmail(e.target.value)}
-                />
-              </div>
-
-              <div className="form-group" style={{ marginBottom: '24px' }}>
-                <label className="form-label">Contraseña de Acceso</label>
-                <input 
-                  type="password" 
-                  className="form-input" 
-                  placeholder="••••••••"
-                  value={empresaPass}
-                  onChange={(e) => setEmpresaPass(e.target.value)}
-                />
-              </div>
-
-              <button type="submit" className="btn btn-primary full-width" style={{ padding: '14px' }}>
-                🔑 Iniciar Sesión Privada
-              </button>
-            </form>
-          </div>
-        </div>
-      )}
 
       {currentView === 'home' && (
         <section className="hero">
@@ -780,15 +789,8 @@ export default function App() {
                         </div>
 
                         <div className="card-body">
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                          <div style={{ marginBottom: '4px' }}>
                             <div className="card-code">{sello.id}</div>
-                            <button 
-                              className={`btn-compare-check ${isSelected ? 'selected' : ''}`}
-                              onClick={(e) => { e.stopPropagation(); toggleCompararSello(sello); }}
-                              title="Seleccionar para comparar lado a lado"
-                            >
-                              <span>{isSelected ? '☑️' : '◻️'}</span> Comparar
-                            </button>
                           </div>
                           <h3 className="card-title">{sello.codigoEquivalente}</h3>
                           
@@ -1196,10 +1198,20 @@ export default function App() {
             <div className="empresa-card">
                 <div className="empresa-header">
                   <div>
-                    <h2 style={{ fontSize: '24px', fontWeight: 800 }}>Panel Interno de Gestión de Ventas & Catálogo</h2>
-                    <p style={{ color: 'var(--color-text-muted)', fontSize: '14px' }}>Sesión activa: <strong>vendedor@graphite.com.ar</strong></p>
+                    <h2 style={{ fontSize: '24px', fontWeight: 800 }}>
+                      {userIdentity?.role === 'admin' ? '👑 Panel de Control & Administración General' : '💼 Panel Interno de Gestión de Ventas & Catálogo'}
+                    </h2>
+                    <p style={{ color: 'var(--color-text-muted)', fontSize: '14px' }}>
+                      Sesión activa: <strong>{userIdentity?.email || (userIdentity?.role === 'admin' ? 'martin.hellwing@graphite.com' : 'vendedor@graphite.com')}</strong> ({userIdentity?.name || 'Personal Autorizado'})
+                    </p>
                   </div>
-                  <span className="empresa-badge-auth">🔒 Personal Autorizado Graphite</span>
+                  <span className="empresa-badge-auth" style={{ 
+                    backgroundColor: userIdentity?.role === 'admin' ? '#991B1B' : '#0F172A',
+                    color: userIdentity?.role === 'admin' ? '#FEF2F2' : '#38BDF8',
+                    border: userIdentity?.role === 'admin' ? '1px solid #DC2626' : '1px solid #334155'
+                  }}>
+                    {userIdentity?.role === 'admin' ? '👑 Administrador General' : '👔 Cotizador / Vendedor'}
+                  </span>
                 </div>
 
                 {/* SUB PESTAÑAS DEL PANEL */}
@@ -1216,6 +1228,14 @@ export default function App() {
                   >
                     ➕ Carga de Sellos al Catálogo (ABM)
                   </button>
+                  {userIdentity?.role === 'admin' && (
+                    <button 
+                      className={`tab-btn ${empresaSubTab === 'metricas' ? 'active' : ''}`}
+                      onClick={() => setEmpresaSubTab('metricas')}
+                    >
+                      📊 Métricas del MVP (Lean Canvas)
+                    </button>
+                  )}
                 </div>
 
                 {empresaSubTab === 'leads' && (
@@ -1364,6 +1384,50 @@ export default function App() {
                       ➕ Cargar Sello al Catálogo Oficial
                     </button>
                   </form>
+                )}
+
+                {empresaSubTab === 'metricas' && userIdentity?.role === 'admin' && (
+                  <div>
+                    <h3 style={{ fontSize: '18px', fontWeight: 800, marginBottom: '8px' }}>
+                      Métricas Clave del MVP (Validación Lean Canvas)
+                    </h3>
+                    <p style={{ color: 'var(--color-text-muted)', fontSize: '13px', marginBottom: '20px' }}>
+                      Indicadores de rendimiento comercial y operativo de Graphite Technologies en tiempo real.
+                    </p>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', marginBottom: '24px' }}>
+                      <div className="stat-box" style={{ textAlign: 'left', padding: '18px', backgroundColor: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '8px' }}>
+                        <div style={{ fontSize: '11px', textTransform: 'uppercase', color: '#64748B', fontWeight: 700 }}>Tiempo Promedio de Respuesta</div>
+                        <div style={{ fontSize: '26px', fontWeight: 800, color: '#10B981', margin: '4px 0' }}>3.2 min</div>
+                        <div style={{ fontSize: '12px', color: '#64748B' }}>Meta: &lt; 5 min (antes &gt; 60 min)</div>
+                      </div>
+
+                      <div className="stat-box" style={{ textAlign: 'left', padding: '18px', backgroundColor: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '8px' }}>
+                        <div style={{ fontSize: '11px', textTransform: 'uppercase', color: '#64748B', fontWeight: 700 }}>Autonomía del Cotizador</div>
+                        <div style={{ fontSize: '26px', fontWeight: 800, color: '#3B82F6', margin: '4px 0' }}>88.5%</div>
+                        <div style={{ fontSize: '12px', color: '#64748B' }}>Consultas resueltas sin recurrir a vendedor senior</div>
+                      </div>
+
+                      <div className="stat-box" style={{ textAlign: 'left', padding: '18px', backgroundColor: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '8px' }}>
+                        <div style={{ fontSize: '11px', textTransform: 'uppercase', color: '#64748B', fontWeight: 700 }}>Horas Ahorradas / Semana</div>
+                        <div style={{ fontSize: '26px', fontWeight: 800, color: '#D20A11', margin: '4px 0' }}>38 hs</div>
+                        <div style={{ fontSize: '12px', color: '#64748B' }}>Impacto acumulado en el equipo comercial</div>
+                      </div>
+
+                      <div className="stat-box" style={{ textAlign: 'left', padding: '18px', backgroundColor: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '8px' }}>
+                        <div style={{ fontSize: '11px', textTransform: 'uppercase', color: '#64748B', fontWeight: 700 }}>Catálogo en Base de Datos</div>
+                        <div style={{ fontSize: '26px', fontWeight: 800, color: '#0F172A', margin: '4px 0' }}>{catalogoLocal.length} sellos</div>
+                        <div style={{ fontSize: '12px', color: '#64748B' }}>Modelos y equivalencias verificadas</div>
+                      </div>
+                    </div>
+
+                    <div style={{ backgroundColor: '#FEF2F2', border: '1px solid #FECACA', borderRadius: '8px', padding: '16px' }}>
+                      <strong style={{ color: '#991B1B', fontSize: '14px' }}>👑 Control de Administración Exclusivo:</strong>
+                      <p style={{ fontSize: '13px', color: '#7F1D1D', marginTop: '4px', lineHeight: 1.5 }}>
+                        Conectado como <strong>martin.hellwing@graphite.com</strong>. Podés gestionar nuevos cotizadores, autorizar altas de catálogo masivas y exportar el informe de cotizaciones para el ERP interno.
+                      </p>
+                    </div>
+                  </div>
                 )}
               </div>
           </div>
