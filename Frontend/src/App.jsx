@@ -149,7 +149,7 @@ export default function App() {
       const identity = { role: 'admin', name: nombreCustom || 'Martín Hellwing', email: emailNorm };
       setUserIdentity(identity);
       setIsEmpresaLoggedIn(true);
-      navegarA('empresa', 'empresa');
+      navegarA('home', 'home'); // El panel de control queda accesible desde el menú superior
       return;
     }
     
@@ -159,7 +159,7 @@ export default function App() {
       const identity = { role: 'vendedor', name: display, email: emailNorm };
       setUserIdentity(identity);
       setIsEmpresaLoggedIn(true);
-      navegarA('empresa', 'empresa');
+      navegarA('home', 'home'); // El panel de ventas queda accesible desde el menú superior
       return;
     }
     
@@ -266,22 +266,33 @@ export default function App() {
           password: clientForm.pass
         });
 
-        if (error) {
-          console.warn("Aviso en login con Supabase:", error.message);
+        // Sin sesión válida de Supabase no se ingresa: el registro en localStorage solo sirve para elegir el mensaje.
+        if (error || !data?.user) {
+          console.warn("Aviso en login con Supabase:", error?.message);
+          const mensaje = (error?.message || '').toLowerCase();
+
+          if (mensaje.includes('email not confirmed')) {
+            alert(`📧 Todavía no confirmaste tu correo "${emailNorm}".\n\nRevisá tu casilla y hacé clic en el enlace de confirmación.`);
+            return;
+          }
+
           const usuariosGuardados = JSON.parse(localStorage.getItem('graphite_usuarios_registrados') || '[]');
           const usuarioExistente = usuariosGuardados.find(u => u.email.toLowerCase() === emailNorm);
 
-          if (!usuarioExistente && (error.message.includes('Invalid login credentials') || error.message.includes('not found'))) {
+          if (!usuarioExistente && (mensaje.includes('invalid login credentials') || mensaje.includes('not found'))) {
             alert(`⚠️ El correo "${emailNorm}" no se encuentra registrado.\n\nPor favor hacé clic en la pestaña "Crear Cuenta" para registrarte.`);
             return;
           }
+
+          alert("⚠️ Correo o contraseña incorrectos. Por favor verificá tus datos.");
+          return;
         }
 
-        const nombreUsuario = data?.user?.user_metadata?.full_name || clientForm.nombre || emailNorm.split('@')[0];
+        const nombreUsuario = data.user.user_metadata?.full_name || clientForm.nombre || emailNorm.split('@')[0];
         resolverRolYRedirigir(emailNorm, nombreUsuario);
       } catch (err) {
         console.error("Error en proceso de login:", err);
-        resolverRolYRedirigir(emailNorm);
+        alert("No se pudo conectar con el servicio de autenticación. Intentá de nuevo en unos minutos.");
       }
     } else {
       // Pestaña: Crear Cuenta
@@ -331,6 +342,8 @@ export default function App() {
             return;
           }
           console.warn("Aviso en Supabase signUp:", error.message);
+          alert(`⚠️ No se pudo crear la cuenta: ${error.message}`);
+          return;
         }
 
         // 4. Guardar en almacenamiento de cuentas registradas
@@ -341,7 +354,14 @@ export default function App() {
         };
         localStorage.setItem('graphite_usuarios_registrados', JSON.stringify([...usuariosGuardados, nuevoRegistro]));
 
-        alert(`✅ ¡Cuenta creada con éxito para ${clientForm.nombre}!\n\nSe ha enviado un aviso de confirmación y bienvenida a tu casilla (${emailNorm}). ¡Bienvenido a Graphite Technologies!`);
+        // Si Supabase pide confirmar el correo, no hay sesión todavía: se ingresa desde el enlace del correo.
+        if (!data?.session) {
+          alert(`✅ ¡Cuenta creada para ${clientForm.nombre}!\n\nTe enviamos un correo a ${emailNorm}. Hacé clic en el enlace de confirmación para ingresar.`);
+          setClientAuthTab('login');
+          return;
+        }
+
+        alert(`✅ ¡Cuenta creada con éxito para ${clientForm.nombre}! ¡Bienvenido a Graphite Technologies!`);
         resolverRolYRedirigir(emailNorm, clientForm.nombre.trim());
       } catch (err) {
         console.error("Error en registro:", err);
