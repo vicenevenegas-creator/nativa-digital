@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Navbar from './components/Navbar';
 import BuscadorForm from './components/BuscadorForm';
 import Footer from './components/Footer';
-import { supabase } from './supabase';
+import { supabase, AUTH_CALLBACK_URL } from './supabase';
 import { SELLOS_REPUESSTOS, MARCAS_BOMBA, MODELOS_BOMBA, MARCAS_SELLO_COMPETIDOR, TIPOS_FLUIDO, MOCK_LEADS_CONSULTAS } from './data/mockData';
 import './styles/design-system.css';
 
@@ -85,8 +85,10 @@ export default function App() {
     };
 
     window.addEventListener('popstate', handlePopState);
-    // Inicializar estado de entrada
-    window.history.replaceState({ vista: 'acceso', tab: 'acceso' }, '', '#acceso');
+    // Inicializar estado de entrada (salvo al volver de Supabase: ese caso lo resuelve el callback)
+    if (window.location.pathname !== '/auth/callback') {
+      window.history.replaceState({ vista: 'acceso', tab: 'acceso' }, '', '#acceso');
+    }
 
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
@@ -106,7 +108,7 @@ export default function App() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`
+          redirectTo: AUTH_CALLBACK_URL
         }
       });
       if (error) {
@@ -125,7 +127,7 @@ export default function App() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'azure',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: AUTH_CALLBACK_URL,
           scopes: 'email profile openid'
         }
       });
@@ -188,7 +190,34 @@ export default function App() {
       }
     };
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    // Callback de Supabase (/auth/callback?code=...&next=home): intercambiar el código por la sesión.
+    // La URL se limpia antes del intercambio para que el código (de un solo uso) no quede en el historial.
+    const procesarCallbackAuth = async () => {
+      if (window.location.pathname !== '/auth/callback') return;
+
+      const params = new URLSearchParams(window.location.search);
+      const code = params.get('code');
+      const errorDescripcion = params.get('error_description');
+      const destino = params.get('next') || 'home';
+
+      window.history.replaceState({ vista: destino, tab: destino }, '', `/#${destino}`);
+
+      if (errorDescripcion || !code) {
+        window.history.replaceState({ vista: 'acceso', tab: 'acceso' }, '', '/#acceso');
+        if (errorDescripcion) alert("No se pudo completar el inicio de sesión: " + errorDescripcion);
+        return;
+      }
+
+      const { error } = await supabase.auth.exchangeCodeForSession(code);
+      if (error) {
+        console.error("Error al procesar el callback de Supabase:", error.message);
+        window.history.replaceState({ vista: 'acceso', tab: 'acceso' }, '', '/#acceso');
+        alert("No se pudo completar el inicio de sesión. Por favor ingresá con tu correo y contraseña.");
+      }
+      // Si salió bien, onAuthStateChange recibe la sesión y resolverRolYRedirigir lleva a #home.
+    };
+
+    procesarCallbackAuth().then(() => supabase.auth.getSession()).then(({ data: { session } }) => {
       if (session?.user) {
         const userEmail = session.user.email;
         const userName = session.user.user_metadata?.full_name || session.user.user_metadata?.name || userEmail.split('@')[0];
@@ -290,7 +319,8 @@ export default function App() {
           options: {
             data: {
               full_name: clientForm.nombre.trim()
-            }
+            },
+            emailRedirectTo: AUTH_CALLBACK_URL
           }
         });
 
