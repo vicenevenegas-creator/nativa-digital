@@ -1,10 +1,30 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Navbar from './components/Navbar';
 import BuscadorForm from './components/BuscadorForm';
 import Footer from './components/Footer';
 import { supabase, AUTH_CALLBACK_URL } from './supabase';
 import { SELLOS_REPUESSTOS, MARCAS_BOMBA, MODELOS_BOMBA, MARCAS_SELLO_COMPETIDOR, TIPOS_FLUIDO, MOCK_LEADS_CONSULTAS } from './data/mockData';
 import './styles/design-system.css';
+
+// Personal de Graphite: dominio exacto (con "@" delante, para que "x@otrographite.com.ar" no pase)
+const DOMINIO_EMPRESA = '@graphite.com.ar';
+// Únicas personas con acceso de administrador (correo completo)
+const EMAILS_ADMIN = ['martin.hellwing@graphite.com.ar'];
+
+const esCorreoEmpresa = (email) => email.endsWith(DOMINIO_EMPRESA);
+
+// Vistas que existen y quién puede verlas
+const VISTAS_ACCESO = ['acceso', 'cliente-auth', 'empresa-login'];
+const VISTAS_USUARIO = ['home', 'resultados', 'detalle', 'favoritos', 'mis-consultas'];
+const VISTAS_EMPRESA = ['empresa'];
+
+// Devuelve la vista pedida si el rol puede verla; si no, a dónde corresponde mandarlo
+const vistaPermitida = (vista, rol) => {
+  if (!rol) return 'acceso';
+  if (VISTAS_ACCESO.includes(vista)) return 'home'; // con sesión iniciada no se vuelve al login
+  if (VISTAS_EMPRESA.includes(vista)) return (rol === 'admin' || rol === 'vendedor') ? vista : 'home';
+  return VISTAS_USUARIO.includes(vista) ? vista : 'home';
+};
 
 export default function App() {
   const [currentTab, setCurrentTab] = useState('acceso');
@@ -93,6 +113,16 @@ export default function App() {
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
+  // Guardia de vistas: cubre menú, flechas del navegador y hashes escritos a mano en la URL
+  useEffect(() => {
+    const permitida = vistaPermitida(currentView, userIdentity?.role);
+    if (permitida !== currentView) {
+      setCurrentView(permitida);
+      setCurrentTab(permitida);
+      window.history.replaceState({ vista: permitida, tab: permitida }, '', `#${permitida}`);
+    }
+  }, [currentView, userIdentity]);
+
   // Estados para autenticación de clientes
   const [clientAuthTab, setClientAuthTab] = useState('login'); // 'login' | 'register'
   const [clientForm, setClientForm] = useState({
@@ -144,52 +174,36 @@ export default function App() {
   const resolverRolYRedirigir = (email, nombreCustom = null) => {
     const emailNorm = (email || '').trim().toLowerCase();
     
-    // 1. Administrador General (martin.hellwing@graphite.com)
-    if (emailNorm.startsWith('martin.hellwing@graphite.com')) {
-      const identity = { role: 'admin', name: nombreCustom || 'Martín Hellwing', email: emailNorm };
-      setUserIdentity(identity);
-      setIsEmpresaLoggedIn(true);
-      navegarA('home', 'home'); // El panel de control queda accesible desde el menú superior
-      return;
-    }
-    
-    // 2. Vendedor / Cotizador (@graphite.com o @graphite.com.ar)
-    if (emailNorm.endsWith('@graphite.com') || emailNorm.endsWith('@graphite.com.ar')) {
-      const display = nombreCustom || emailNorm.split('@')[0];
-      const identity = { role: 'vendedor', name: display, email: emailNorm };
-      setUserIdentity(identity);
-      setIsEmpresaLoggedIn(true);
-      navegarA('home', 'home'); // El panel de ventas queda accesible desde el menú superior
-      return;
-    }
-    
-    // 3. Cliente / Comprador (cualquier otro correo)
-    const displayName = nombreCustom || emailNorm.split('@')[0] || 'Cliente';
-    const identity = { role: 'cliente', name: displayName, email: emailNorm };
-    setUserIdentity(identity);
-    setIsEmpresaLoggedIn(false);
-    navegarA('home', 'home');
+    // 1. Administrador General (correo exacto) · 2. Vendedor / Cotizador (dominio Graphite) · 3. Cliente
+    let role = 'cliente';
+    if (EMAILS_ADMIN.includes(emailNorm)) role = 'admin';
+    else if (esCorreoEmpresa(emailNorm)) role = 'vendedor';
+
+    const nombrePorDefecto = role === 'admin' ? 'Martín Hellwing' : (emailNorm.split('@')[0] || 'Cliente');
+    setUserIdentity({ role, name: nombreCustom || nombrePorDefecto, email: emailNorm });
+    navegarA('home', 'home'); // El panel de empresa queda accesible desde el menú superior
+  };
+
+  // Id del usuario cuya sesión ya se aplicó: Supabase vuelve a avisar al renovar el token
+  // o al volver a la pestaña, y eso no debe sacar al usuario de la pantalla en la que está.
+  const usuarioActivoRef = useRef(null);
+
+  const aplicarSesion = (session) => {
+    const user = session?.user;
+    if (!user || usuarioActivoRef.current === user.id) return;
+    usuarioActivoRef.current = user.id;
+    const nombre = user.user_metadata?.full_name || user.user_metadata?.name || user.email.split('@')[0];
+    resolverRolYRedirigir(user.email, nombre);
+  };
+
+  const cerrarSesionLocal = () => {
+    usuarioActivoRef.current = null;
+    setUserIdentity(null);
+    navegarA('acceso', 'acceso');
   };
 
   // Escuchar sesión activa de Supabase (ej: login con Google o Microsoft Outlook)
   useEffect(() => {
-    const guardarEnCacheSiEsNuevo = (userEmail, userName) => {
-      if (!userEmail) return;
-      try {
-        const guardados = JSON.parse(localStorage.getItem('graphite_usuarios_registrados') || '[]');
-        if (!guardados.some(u => u.email.toLowerCase() === userEmail.toLowerCase())) {
-          guardados.push({
-            email: userEmail.toLowerCase(),
-            nombre: userName,
-            fechaRegistro: new Date().toISOString()
-          });
-          localStorage.setItem('graphite_usuarios_registrados', JSON.stringify(guardados));
-        }
-      } catch (e) {
-        console.error("Error guardando usuario en cache", e);
-      }
-    };
-
     // Callback de Supabase (/auth/callback?code=...&next=home): intercambiar el código por la sesión.
     // La URL se limpia antes del intercambio para que el código (de un solo uso) no quede en el historial.
     const procesarCallbackAuth = async () => {
@@ -218,21 +232,15 @@ export default function App() {
     };
 
     procesarCallbackAuth().then(() => supabase.auth.getSession()).then(({ data: { session } }) => {
-      if (session?.user) {
-        const userEmail = session.user.email;
-        const userName = session.user.user_metadata?.full_name || session.user.user_metadata?.name || userEmail.split('@')[0];
-        guardarEnCacheSiEsNuevo(userEmail, userName);
-        resolverRolYRedirigir(userEmail, userName);
-      }
+      aplicarSesion(session);
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.user) {
-        const userEmail = session.user.email;
-        const userName = session.user.user_metadata?.full_name || session.user.user_metadata?.name || userEmail.split('@')[0];
-        guardarEnCacheSiEsNuevo(userEmail, userName);
-        resolverRolYRedirigir(userEmail, userName);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT') {
+        if (usuarioActivoRef.current) cerrarSesionLocal();
+        return;
       }
+      aplicarSesion(session);
     });
 
     return () => {
@@ -242,9 +250,6 @@ export default function App() {
 
 
   // Estado para el panel de empresa
-  const [isEmpresaLoggedIn, setIsEmpresaLoggedIn] = useState(false);
-  const [empresaEmail, setEmpresaEmail] = useState('');
-  const [empresaPass, setEmpresaPass] = useState('');
   const [empresaSubTab, setEmpresaSubTab] = useState('leads'); // 'leads' | 'carga' | 'metricas'
   const [leadsList, setLeadsList] = useState(MOCK_LEADS_CONSULTAS);
   const [catalogoLocal, setCatalogoLocal] = useState(SELLOS_REPUESSTOS);
@@ -266,8 +271,8 @@ export default function App() {
           password: clientForm.pass
         });
 
-        // Sin sesión válida de Supabase no se ingresa: el registro en localStorage solo sirve para elegir el mensaje.
-        if (error || !data?.user) {
+        // Sin sesión válida de Supabase no se ingresa
+        if (error || !data?.session) {
           console.warn("Aviso en login con Supabase:", error?.message);
           const mensaje = (error?.message || '').toLowerCase();
 
@@ -276,20 +281,12 @@ export default function App() {
             return;
           }
 
-          const usuariosGuardados = JSON.parse(localStorage.getItem('graphite_usuarios_registrados') || '[]');
-          const usuarioExistente = usuariosGuardados.find(u => u.email.toLowerCase() === emailNorm);
-
-          if (!usuarioExistente && (mensaje.includes('invalid login credentials') || mensaje.includes('not found'))) {
-            alert(`⚠️ El correo "${emailNorm}" no se encuentra registrado.\n\nPor favor hacé clic en la pestaña "Crear Cuenta" para registrarte.`);
-            return;
-          }
-
-          alert("⚠️ Correo o contraseña incorrectos. Por favor verificá tus datos.");
+          // Supabase no distingue "correo inexistente" de "contraseña incorrecta" (a propósito)
+          alert("⚠️ Correo o contraseña incorrectos.\n\nSi todavía no tenés cuenta, creala en la pestaña \"Crear Cuenta\".");
           return;
         }
 
-        const nombreUsuario = data.user.user_metadata?.full_name || clientForm.nombre || emailNorm.split('@')[0];
-        resolverRolYRedirigir(emailNorm, nombreUsuario);
+        aplicarSesion(data.session);
       } catch (err) {
         console.error("Error en proceso de login:", err);
         alert("No se pudo conectar con el servicio de autenticación. Intentá de nuevo en unos minutos.");
@@ -302,7 +299,7 @@ export default function App() {
       }
 
       // 1. Bloqueo de creación pública para dominios corporativos internos
-      if (emailNorm.endsWith('@graphite.com.ar') || emailNorm.endsWith('@graphite.com')) {
+      if (esCorreoEmpresa(emailNorm)) {
         alert("🔒 Los correos corporativos @graphite.com.ar corresponden a colaboradores de la empresa.\n\nDeben ingresar utilizando el botón de 'Acceso Corporativo con Outlook / Microsoft 365' o iniciar sesión con sus credenciales autorizadas.");
         return;
       }
@@ -312,17 +309,7 @@ export default function App() {
         return;
       }
 
-      // 2. Comprobar si el correo ya está registrado (en localStorage o Supabase)
-      const usuariosGuardados = JSON.parse(localStorage.getItem('graphite_usuarios_registrados') || '[]');
-      const yaRegistrado = usuariosGuardados.some(u => u.email.toLowerCase() === emailNorm);
-
-      if (yaRegistrado) {
-        alert(`⚠️ El correo "${emailNorm}" YA se encuentra registrado en Graphite Technologies.\n\nPor favor, ingresá en la pestaña "Iniciar Sesión" con tu contraseña o mediante Google.`);
-        setClientAuthTab('login');
-        return;
-      }
-
-      // 3. Registrar en Supabase Auth (dispara el correo de confirmación/bienvenida a la casilla)
+      // 2. Registrar en Supabase Auth (dispara el correo de confirmación/bienvenida a la casilla)
       try {
         const { data, error } = await supabase.auth.signUp({
           email: emailNorm,
@@ -346,13 +333,13 @@ export default function App() {
           return;
         }
 
-        // 4. Guardar en almacenamiento de cuentas registradas
-        const nuevoRegistro = {
-          email: emailNorm,
-          nombre: clientForm.nombre.trim(),
-          fechaRegistro: new Date().toISOString()
-        };
-        localStorage.setItem('graphite_usuarios_registrados', JSON.stringify([...usuariosGuardados, nuevoRegistro]));
+        // 3. Correo ya registrado: con confirmación por correo activa, Supabase no devuelve error
+        // sino un usuario sin identidades (para no revelar qué correos existen).
+        if (data?.user && data.user.identities?.length === 0) {
+          alert(`⚠️ El correo "${emailNorm}" YA se encuentra registrado en Graphite Technologies.\n\nPor favor, ingresá en la pestaña "Iniciar Sesión" con tu contraseña o mediante Google.`);
+          setClientAuthTab('login');
+          return;
+        }
 
         // Si Supabase pide confirmar el correo, no hay sesión todavía: se ingresa desde el enlace del correo.
         if (!data?.session) {
@@ -362,7 +349,7 @@ export default function App() {
         }
 
         alert(`✅ ¡Cuenta creada con éxito para ${clientForm.nombre}! ¡Bienvenido a Graphite Technologies!`);
-        resolverRolYRedirigir(emailNorm, clientForm.nombre.trim());
+        aplicarSesion(data.session);
       } catch (err) {
         console.error("Error en registro:", err);
         alert(`⚠️ Ocurrió un error al procesar el registro: ${err.message}`);
@@ -512,21 +499,6 @@ export default function App() {
     window.print();
   };
 
-  const handleLoginEmpresa = (e) => {
-    e.preventDefault();
-    if (!empresaEmail || (!empresaEmail.endsWith('@graphite.com.ar') && !empresaEmail.endsWith('@graphite.com'))) {
-      alert("Acceso denegado: Debe ingresar un correo institucional válido con dominio @graphite.com.ar");
-      return;
-    }
-    if (!empresaPass || empresaPass.trim().length < 4) {
-      alert("Por favor ingrese su contraseña corporativa de acceso.");
-      return;
-    }
-    setIsEmpresaLoggedIn(true);
-    setUserIdentity({ role: 'empresa', name: empresaEmail.split('@')[0] });
-    navegarA('empresa', 'empresa');
-  };
-
   const handleAgregarRepuesto = (e) => {
     e.preventDefault();
     if (!nuevoRepuesto.codigoEquivalente || !nuevoRepuesto.modeloBombaCompatible) {
@@ -574,10 +546,8 @@ export default function App() {
         currentView={currentView}
         favoritosCount={favoritos.length}
         onChangeAccess={() => {
+          cerrarSesionLocal();
           supabase.auth.signOut().catch(() => {});
-          setUserIdentity(null);
-          setIsEmpresaLoggedIn(false);
-          navegarA('acceso', 'acceso');
         }}
       />
 
@@ -639,13 +609,13 @@ export default function App() {
                   <input 
                     type="email" 
                     className="form-input" 
-                    placeholder="martin.hellwing@graphite.com / cotizador@... / cliente@..."
+                    placeholder="tu.correo@empresa.com"
                     value={clientForm.email}
                     onChange={(e) => setClientForm({ ...clientForm, email: e.target.value })}
                     required
                   />
                   <span style={{ fontSize: '11px', color: 'var(--color-text-muted)', marginTop: '2px' }}>
-                    El sistema detectará si sos Cliente, Vendedor (@graphite.com) o Administrador.
+                    El sistema detectará si sos Cliente, Vendedor (@graphite.com.ar) o Administrador.
                   </span>
                 </div>
 
@@ -1408,7 +1378,7 @@ export default function App() {
       )}
 
       {/* VISTA PRIVADA EXCLUSIVA PARA EMPRESA (@GRAPHITE.COM) */}
-      {currentView === 'empresa' && (
+      {currentView === 'empresa' && (userIdentity?.role === 'admin' || userIdentity?.role === 'vendedor') && (
         <div className="results-page-wrapper">
           <div className="container">
             <span className="back-link" onClick={() => { setCurrentView('home'); setCurrentTab('home'); }}>
@@ -1422,7 +1392,7 @@ export default function App() {
                       {userIdentity?.role === 'admin' ? '👑 Panel de Control & Administración General' : '💼 Panel Interno de Gestión de Ventas & Catálogo'}
                     </h2>
                     <p style={{ color: 'var(--color-text-muted)', fontSize: '14px' }}>
-                      Sesión activa: <strong>{userIdentity?.email || (userIdentity?.role === 'admin' ? 'martin.hellwing@graphite.com' : 'vendedor@graphite.com')}</strong> ({userIdentity?.name || 'Personal Autorizado'})
+                      Sesión activa: <strong>{userIdentity?.email}</strong> ({userIdentity?.name || 'Personal Autorizado'})
                     </p>
                   </div>
                   <span className="empresa-badge-auth" style={{ 
@@ -1644,7 +1614,7 @@ export default function App() {
                     <div style={{ backgroundColor: '#FEF2F2', border: '1px solid #FECACA', borderRadius: '8px', padding: '16px' }}>
                       <strong style={{ color: '#991B1B', fontSize: '14px' }}>👑 Control de Administración Exclusivo:</strong>
                       <p style={{ fontSize: '13px', color: '#7F1D1D', marginTop: '4px', lineHeight: 1.5 }}>
-                        Conectado como <strong>martin.hellwing@graphite.com</strong>. Podés gestionar nuevos cotizadores, autorizar altas de catálogo masivas y exportar el informe de cotizaciones para el ERP interno.
+                        Conectado como <strong>{userIdentity?.email}</strong>. Podés gestionar nuevos cotizadores, autorizar altas de catálogo masivas y exportar el informe de cotizaciones para el ERP interno.
                       </p>
                     </div>
                   </div>
