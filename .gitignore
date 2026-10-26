@@ -17,3 +17,6 @@ dist-ssr/
 # System files
 .DS_Store
 Thumbs.db
+
+# Videos (pesados, no se suben)
+Video/

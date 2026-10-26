@@ -6,8 +6,9 @@ CREATE TABLE usuarios (
  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
  email TEXT UNIQUE NOT NULL,
  nombre TEXT NOT NULL,
- rol TEXT NOT NULL DEFAULT 'admin',
- creado_en TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+ rol TEXT NOT NULL DEFAULT 'cliente',
+ creado_en TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+ proveedor TEXT
 );
 
 -- 2. Tabla de Marcas de Bomba
@@ -58,3 +59,29 @@ CREATE TABLE consultas_leads (
  nombre_contacto TEXT NOT NULL,
  telefono_contacto TEXT NOT NULL
 );
+
+-- 8. Alta automática en usuarios al crearse una cuenta en Supabase Auth
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $function$
+BEGIN
+ INSERT INTO public.usuarios (id, email, nombre, proveedor)
+ VALUES (
+ NEW.id,
+ NEW.email,
+ COALESCE(
+ NEW.raw_user_meta_data->>'full_name',
+ NEW.raw_user_meta_data->>'name',
+ 'Usuario Nuevo'
+ ),
+ NEW.raw_app_meta_data->>'provider'
+ );
+ RETURN NEW;
+END;
+$function$;
+
+CREATE TRIGGER on_auth_user_created
+ AFTER INSERT ON auth.users
+ FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
