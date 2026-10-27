@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Navbar from './components/Navbar';
-import BuscadorForm from './components/BuscadorForm';
+import BuscadorForm, { CamposBusqueda } from './components/BuscadorForm';
 import Footer from './components/Footer';
 import CargaExcel from './components/CargaExcel';
 import { supabase, AUTH_CALLBACK_URL } from './supabase';
-import { SELLOS_REPUESSTOS, MARCAS_BOMBA, MODELOS_BOMBA, MARCAS_SELLO_COMPETIDOR, TIPOS_FLUIDO, MOCK_LEADS_CONSULTAS } from './data/mockData';
+import { MOCK_LEADS_CONSULTAS } from './data/mockData';
+import { cargarCatalogo, filtrarFilas, agruparPorSello, formatearEje } from './lib/catalogo';
 import './styles/design-system.css';
 
 // Personal de Graphite: dominio exacto (con "@" delante, para que "x@otrographite.com.ar" no pase)
@@ -31,8 +32,7 @@ export default function App() {
   const [currentTab, setCurrentTab] = useState('acceso');
   const [currentView, setCurrentView] = useState('acceso'); // 'acceso' | 'cliente-auth' | 'empresa-login' | 'home' | 'resultados' | 'detalle' | 'mis-consultas' | 'empresa'
   const [userIdentity, setUserIdentity] = useState(null); // { role: 'public' | 'empresa', name: string }
-  const [activeCategory, setActiveCategory] = useState('bombas');
-  const [selloSeleccionado, setSelloSeleccionado] = useState(SELLOS_REPUESSTOS[0]);
+  const [selloSeleccionado, setSelloSeleccionado] = useState(null);
   
   // Favoritos del cliente
   const [favoritos, setFavoritos] = useState(() => {
@@ -253,7 +253,11 @@ export default function App() {
   // Estado para el panel de empresa
   const [empresaSubTab, setEmpresaSubTab] = useState('leads'); // 'leads' | 'carga' | 'metricas'
   const [leadsList, setLeadsList] = useState(MOCK_LEADS_CONSULTAS);
-  const [catalogoLocal, setCatalogoLocal] = useState(SELLOS_REPUESSTOS);
+
+  // Catálogo real (filas de compatibilidades con su sello) leído de Supabase
+  const [catalogo, setCatalogo] = useState([]);
+  const [cargandoCatalogo, setCargandoCatalogo] = useState(true);
+  const [errorCatalogo, setErrorCatalogo] = useState('');
 
   const handleUnifiedAuthSubmit = async (e) => {
     e.preventDefault();
@@ -358,31 +362,20 @@ export default function App() {
     }
   };
 
-  // Formulario nuevo repuesto
-  const [nuevoRepuesto, setNuevoRepuesto] = useState({
-    codigoEquivalente: '',
-    equivalenteCompetidor: '',
-    marcaSelloCompetidor: 'John Crane',
-    marcaBombaCompatible: 'Grundfos',
-    modeloBombaCompatible: '',
-    diametroEje: '',
-    presionMax: '',
-    temperaturaMax: '',
-    materiales: ''
-  });
+  const BUSQUEDA_VACIA = { marcaBomba: '', modeloBomba: '', diametro: '', fluido: '' };
+  const [searchParams, setSearchParams] = useState(BUSQUEDA_VACIA);
 
-  const [searchParams, setSearchParams] = useState({
-    marcaBomba: '',
-    modeloBomba: '',
-    marcaSello: '',
-    tipoSello: '',
-    fluido: '',
-    diametro: '',
-    diametroExt: '',
-    longitud: ''
-  });
+  const [resultados, setResultados] = useState([]);
 
-  const [resultados, setResultados] = useState(catalogoLocal);
+  useEffect(() => {
+    cargarCatalogo()
+      .then((filas) => {
+        setCatalogo(filas);
+        setResultados(agruparPorSello(filas));
+      })
+      .catch((err) => setErrorCatalogo(err.message))
+      .finally(() => setCargandoCatalogo(false));
+  }, []);
 
   // Estados del Comparador Directo de Sellos
   const [sellosAComparar, setSellosAComparar] = useState([]);
@@ -404,61 +397,13 @@ export default function App() {
   };
 
   const handleSearch = () => {
-    let filtrados = catalogoLocal;
-
-    if (activeCategory === 'bombas') {
-      if (searchParams.marcaBomba) {
-        filtrados = filtrados.filter(s => s.marcaBombaCompatible.toLowerCase() === searchParams.marcaBomba.toLowerCase());
-      }
-      if (searchParams.modeloBomba) {
-        filtrados = filtrados.filter(s => s.modeloBombaCompatible.toLowerCase().includes(searchParams.modeloBomba.toLowerCase()));
-      }
-    } else if (activeCategory === 'sellos') {
-      if (searchParams.marcaSello) {
-        filtrados = filtrados.filter(s => s.marcaSelloCompetidor.toLowerCase() === searchParams.marcaSello.toLowerCase());
-      }
-      if (searchParams.tipoSello) {
-        filtrados = filtrados.filter(s => 
-          s.tipoSelloCompetidor.toLowerCase().includes(searchParams.tipoSello.toLowerCase()) ||
-          s.equivalenteCompetidor.toLowerCase().includes(searchParams.tipoSello.toLowerCase())
-        );
-      }
-    } else if (activeCategory === 'medidas') {
-      // Búsqueda por calibre: d1 (eje), d3 (exterior), L3 (longitud)
-      if (searchParams.diametro) {
-        const d1 = parseFloat(searchParams.diametro);
-        filtrados = filtrados.filter(s => s.diametroEjeNum === d1 || s.diametroEje.includes(searchParams.diametro));
-      }
-      if (searchParams.diametroExt) {
-        const d3 = parseFloat(searchParams.diametroExt);
-        filtrados = filtrados.filter(s => s.diametroExtNum === d3);
-      }
-      if (searchParams.longitud) {
-        const l3 = parseFloat(searchParams.longitud);
-        filtrados = filtrados.filter(s => s.longitudNum === l3);
-      }
-    }
-
-    if (searchParams.fluido) {
-      filtrados = filtrados.filter(s => (s.fluidosAptos || []).some(f => f.toLowerCase().includes(searchParams.fluido.toLowerCase())));
-    }
-
-    setResultados(filtrados);
+    setResultados(agruparPorSello(filtrarFilas(catalogo, searchParams)));
     navegarA('resultados', 'resultados');
   };
 
   const handleReset = () => {
-    setSearchParams({
-      marcaBomba: '',
-      modeloBomba: '',
-      marcaSello: '',
-      tipoSello: '',
-      fluido: '',
-      diametro: '',
-      diametroExt: '',
-      longitud: ''
-    });
-    setResultados(catalogoLocal);
+    setSearchParams(BUSQUEDA_VACIA);
+    setResultados(agruparPorSello(catalogo));
   };
 
 
@@ -471,7 +416,7 @@ export default function App() {
         fecha: fechaTexto,
         codigo: sello.codigoEquivalente,
         bomba: `${sello.marcaBombaCompatible} ${sello.modeloBombaCompatible}`,
-        equivalencia: sello.equivalenteCompetidor,
+        eje: sello.diametroEje,
         estado: estado,
         selloRef: sello
       };
@@ -498,38 +443,6 @@ export default function App() {
 
   const handleImprimirFichaPDF = () => {
     window.print();
-  };
-
-  const handleAgregarRepuesto = (e) => {
-    e.preventDefault();
-    if (!nuevoRepuesto.codigoEquivalente || !nuevoRepuesto.modeloBombaCompatible) {
-      alert("Por favor completá los campos obligatorios.");
-      return;
-    }
-    const creado = {
-      id: `GRA-NEW-${Math.floor(Math.random()*1000)}`,
-      ...nuevoRepuesto,
-      medidasDetalle: `Eje: ${nuevoRepuesto.diametroEje || '25mm'}`,
-      color: "Acero Inoxidable 316L",
-      velocidadMax: "15 m/s",
-      imagen: "https://graphite.com.ar/wp-content/uploads/2019/01/cropped-fav-graphite-192x192.png"
-    };
-
-    const actual = [creado, ...catalogoLocal];
-    setCatalogoLocal(actual);
-    setResultados(actual);
-    alert(`¡Repuesto ${creado.codigoEquivalente} agregado exitosamente al catálogo oficial!`);
-    setNuevoRepuesto({
-      codigoEquivalente: '',
-      equivalenteCompetidor: '',
-      marcaSelloCompetidor: 'John Crane',
-      marcaBombaCompatible: 'Grundfos',
-      modeloBombaCompatible: '',
-      diametroEje: '',
-      presionMax: '',
-      temperaturaMax: '',
-      materiales: ''
-    });
   };
 
   const handleCambiarEstadoLead = (id, nuevoEstado) => {
@@ -724,12 +637,13 @@ export default function App() {
               Seleccioná la marca y modelo de tu bomba o las especificaciones de tu sello actual para obtener matcheos verificados al instante.
             </p>
 
-            <BuscadorForm 
+            <BuscadorForm
               searchParams={searchParams}
               setSearchParams={setSearchParams}
               onSearch={handleSearch}
-              activeCategory={activeCategory}
-              setActiveCategory={setActiveCategory}
+              catalogo={catalogo}
+              cargando={cargandoCatalogo}
+              errorCatalogo={errorCatalogo}
             />
           </div>
         </section>
@@ -754,41 +668,12 @@ export default function App() {
                   </button>
                 </div>
 
-                <div className="sidebar-group">
-                  <label className="sidebar-label">Marca de Bomba</label>
-                  <select 
-                    className="form-select"
-                    value={searchParams.marcaBomba}
-                    onChange={(e) => setSearchParams({ ...searchParams, marcaBomba: e.target.value, modeloBomba: '' })}
-                  >
-                    <option value="">-- Todas las Marcas --</option>
-                    {MARCAS_BOMBA.map(m => <option key={m} value={m}>{m}</option>)}
-                  </select>
-                </div>
-
-                <div className="sidebar-group">
-                  <label className="sidebar-label">Marca de Sello</label>
-                  <select 
-                    className="form-select"
-                    value={searchParams.marcaSello}
-                    onChange={(e) => setSearchParams({ ...searchParams, marcaSello: e.target.value })}
-                  >
-                    <option value="">-- Todas las Marcas --</option>
-                    {MARCAS_SELLO_COMPETIDOR.map(m => <option key={m} value={m}>{m}</option>)}
-                  </select>
-                </div>
-
-                <div className="sidebar-group">
-                  <label className="sidebar-label">Tipo de Fluido</label>
-                  <select 
-                    className="form-select"
-                    value={searchParams.fluido}
-                    onChange={(e) => setSearchParams({ ...searchParams, fluido: e.target.value })}
-                  >
-                    <option value="">-- Todos los Fluidos --</option>
-                    {TIPOS_FLUIDO.map(f => <option key={f} value={f}>{f}</option>)}
-                  </select>
-                </div>
+                <CamposBusqueda
+                  searchParams={searchParams}
+                  setSearchParams={setSearchParams}
+                  catalogo={catalogo}
+                  compacto
+                />
 
                 <button className="btn btn-primary full-width" onClick={handleSearch}>
                   Aplicar Filtros
@@ -798,12 +683,23 @@ export default function App() {
               <main>
                 <div style={{ marginBottom: '20px' }}>
                   <h2 style={{ fontSize: '22px', fontWeight: 800 }}>
-                    Catálogo de Compatibilidad ({resultados.length} Modelos)
+                    Sellos Graphite Compatibles ({resultados.length})
                   </h2>
                   <p style={{ color: 'var(--color-text-muted)', fontSize: '14px' }}>
-                    Hacé clic en cualquier repuesto para abrir su **Ficha Técnica Dedicada**.
+                    Hacé clic en un sello para ver su ficha con foto y plano.
                   </p>
                 </div>
+
+                {resultados.length === 0 && (
+                  <div className="empty-results">
+                    <p style={{ fontSize: '18px', fontWeight: 600, color: 'var(--color-text-muted)' }}>
+                      {catalogo.length === 0 ? 'El catálogo todavía no tiene sellos cargados.' : 'No encontramos un sello para esa combinación.'}
+                    </p>
+                    <p style={{ fontSize: '14px', marginTop: '8px' }}>
+                      Probá con menos filtros o consultanos por WhatsApp y te ayudamos a identificarlo.
+                    </p>
+                  </div>
+                )}
 
                 <div className="results-grid">
                   {resultados.map((sello) => {
@@ -848,9 +744,9 @@ export default function App() {
                           <h3 className="card-title">{sello.codigoEquivalente}</h3>
                           
                           <div className="card-spec">
-                            <div className="spec-item"><span className="spec-label">Equivalencia:</span><span className="spec-val">{sello.equivalenteCompetidor}</span></div>
                             <div className="spec-item"><span className="spec-label">Bomba:</span><span className="spec-val">{sello.marcaBombaCompatible} - {sello.modeloBombaCompatible}</span></div>
-                            <div className="spec-item"><span className="spec-label">Medidas:</span><span className="spec-val">{sello.medidasDetalle || sello.diametroEje}</span></div>
+                            <div className="spec-item"><span className="spec-label">Eje:</span><span className="spec-val">{sello.diametroEje}</span></div>
+                            <div className="spec-item"><span className="spec-label">Fluido:</span><span className="spec-val">{(sello.fluidosAptos || []).join(' · ')}</span></div>
                           </div>
 
                           <div className="card-footer" style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: '8px' }}>
@@ -1032,7 +928,7 @@ export default function App() {
       )}
 
 
-      {currentView === 'detalle' && (
+      {currentView === 'detalle' && selloSeleccionado && (
         <div className="results-page-wrapper">
           <div className="container">
             <span className="back-link" onClick={() => navegarA('resultados', 'resultados')}>
@@ -1055,64 +951,44 @@ export default function App() {
             <div className="product-detail-layout">
               <div className="detail-img-card">
                 <div className="badge-verified" style={{ top: '16px', right: '16px' }}>✓ Matcheo 100% Verificado</div>
-                <img src={selloSeleccionado.imagen} alt={selloSeleccionado.codigoEquivalente} className="detail-large-img" />
+                <img src={selloSeleccionado.imagen} alt={selloSeleccionado.nombre} className="detail-large-img" />
+                {selloSeleccionado.plano && (
+                  <div style={{ marginTop: '16px', borderTop: '1px solid var(--color-border)', paddingTop: '12px' }}>
+                    <div className="spec-detail-title" style={{ marginBottom: '8px' }}>📐 Plano</div>
+                    {selloSeleccionado.planoEsPdf ? (
+                      <a href={selloSeleccionado.plano} target="_blank" rel="noreferrer" className="btn btn-secondary full-width">
+                        Abrir plano (PDF)
+                      </a>
+                    ) : (
+                      <a href={selloSeleccionado.plano} target="_blank" rel="noreferrer">
+                        <img src={selloSeleccionado.plano} alt={`Plano de ${selloSeleccionado.nombre}`} style={{ width: '100%', borderRadius: '8px' }} />
+                      </a>
+                    )}
+                  </div>
+                )}
               </div>
 
               <div className="detail-main-content">
                 <div>
-                  <span className="detail-header-tag">{selloSeleccionado.id}</span>
-                  <h1 className="detail-title">{selloSeleccionado.codigoEquivalente}</h1>
-                </div>
-
-                <div className="tech-limits-container">
-                  <div className="tech-limits-title">⚡ Límites Operativos de Trabajo</div>
-                  <div className="limits-grid">
-                    <div className="limit-item">
-                      <div className="limit-val">{selloSeleccionado.presionMax}</div>
-                      <div className="limit-lbl">Presión Máxima</div>
-                    </div>
-                    <div className="limit-item">
-                      <div className="limit-val">{selloSeleccionado.temperaturaMax}</div>
-                      <div className="limit-lbl">Temperatura Operativa</div>
-                    </div>
-                    <div className="limit-item">
-                      <div className="limit-val">{selloSeleccionado.velocidadMax}</div>
-                      <div className="limit-lbl">Velocidad Máx.</div>
-                    </div>
-                  </div>
+                  <span className="detail-header-tag">{selloSeleccionado.codigo}</span>
+                  <h1 className="detail-title">{selloSeleccionado.nombre}</h1>
                 </div>
 
                 <div className="tech-spec-grid">
-                  <div className="spec-detail-box">
-                    <div className="spec-detail-title">🏢 Bomba Compatible</div>
-                    <div className="spec-detail-val">{selloSeleccionado.marcaBombaCompatible} - {selloSeleccionado.modeloBombaCompatible}</div>
-                  </div>
-
-                  <div className="spec-detail-box">
-                    <div className="spec-detail-title">🔄 Equivalencias Marcas</div>
-                    <div className="spec-detail-val">{selloSeleccionado.equivalenteCompetidor}</div>
-                  </div>
-
-                  <div className="spec-detail-box">
-                    <div className="spec-detail-title">📏 Medidas de Eje</div>
-                    <div className="spec-detail-val">{selloSeleccionado.medidasDetalle || selloSeleccionado.diametroEje}</div>
-                  </div>
-
-                  <div className="spec-detail-box">
-                    <div className="spec-detail-title">🎨 Color / Acabado Visual</div>
-                    <div className="spec-detail-val">{selloSeleccionado.color || "Acero Inoxidable 316"}</div>
-                  </div>
-
                   <div className="spec-detail-box" style={{ gridColumn: '1/-1' }}>
-                    <div className="spec-detail-title">⚙️ Materiales de Caras y Elastómeros</div>
-                    <div className="spec-detail-val">{selloSeleccionado.materiales}</div>
-                  </div>
-
-                  <div className="spec-detail-box" style={{ gridColumn: '1/-1', backgroundColor: '#F0FDF4', borderLeftColor: '#10B981' }}>
-                    <div className="spec-detail-title" style={{ color: '#059669' }}>🧪 Fluidos Aptos Verificados</div>
-                    <div className="spec-detail-val" style={{ fontSize: '13.5px', fontWeight: 600, color: '#0F172A', marginTop: '4px' }}>
-                      {(selloSeleccionado.fluidosAptos || []).join(' · ')}
-                    </div>
+                    <div className="spec-detail-title">🏢 Bombas Compatibles</div>
+                    <table className="crm-table" style={{ marginTop: '8px' }}>
+                      <thead>
+                        <tr><th>Marca</th><th>Modelo</th><th>Eje</th><th>Fluido</th></tr>
+                      </thead>
+                      <tbody>
+                        {(selloSeleccionado.aplicaciones || []).map((a) => (
+                          <tr key={`${a.marca}|${a.modelo}|${a.eje}|${a.fluido}`}>
+                            <td>{a.marca}</td><td>{a.modelo}</td><td>{formatearEje(a.eje)}</td><td>{a.fluido}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
                 </div>
 
@@ -1237,9 +1113,9 @@ export default function App() {
                         <h3 className="card-title">{sello.codigoEquivalente}</h3>
                         
                         <div className="card-spec">
-                          <div className="spec-item"><span className="spec-label">Equivalencia:</span><span className="spec-val">{sello.equivalenteCompetidor}</span></div>
                           <div className="spec-item"><span className="spec-label">Bomba:</span><span className="spec-val">{sello.marcaBombaCompatible} - {sello.modeloBombaCompatible}</span></div>
-                          <div className="spec-item"><span className="spec-label">Medidas:</span><span className="spec-val">{sello.medidasDetalle || sello.diametroEje}</span></div>
+                          <div className="spec-item"><span className="spec-label">Eje:</span><span className="spec-val">{sello.diametroEje}</span></div>
+                          <div className="spec-item"><span className="spec-label">Fluido:</span><span className="spec-val">{(sello.fluidosAptos || []).join(' · ')}</span></div>
                         </div>
 
                         <div className="card-footer" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
@@ -1295,7 +1171,7 @@ export default function App() {
                         <th>Fecha / ID Cotización</th>
                         <th>Sello Mecánico</th>
                         <th>Bomba Compatible</th>
-                        <th>Equivalencia</th>
+                        <th>Eje</th>
                         <th>Estado</th>
                         <th>Acción Directa</th>
                       </tr>
@@ -1311,7 +1187,7 @@ export default function App() {
                             <strong style={{ color: 'var(--color-primary)' }}>{item.codigo}</strong>
                           </td>
                           <td>{item.bomba}</td>
-                          <td>{item.equivalencia}</td>
+                          <td>{item.eje || item.equivalencia}</td>
                           <td>
                             <span className="badge-verified" style={{ position: 'static', display: 'inline-block', fontSize: '11px', padding: '4px 8px' }}>
                               ✓ {item.estado}
@@ -1417,7 +1293,7 @@ export default function App() {
                     className={`tab-btn ${empresaSubTab === 'carga' ? 'active' : ''}`}
                     onClick={() => setEmpresaSubTab('carga')}
                   >
-                    ➕ Carga de Sellos al Catálogo (ABM)
+                    ➕ Carga de Catálogo (Excel)
                   </button>
                   {userIdentity?.role === 'admin' && (
                     <button 
@@ -1488,97 +1364,6 @@ export default function App() {
 
                 {empresaSubTab === 'carga' && <CargaExcel />}
 
-                {empresaSubTab === 'carga' && (
-                  <form onSubmit={handleAgregarRepuesto} style={{ maxWidth: '680px' }}>
-                    <h3 style={{ fontSize: '18px', fontWeight: 800, marginBottom: '16px' }}>Alta de Nuevo Sello Mecánico en el Catálogo</h3>
-
-                    <div className="form-group" style={{ marginBottom: '16px' }}>
-                      <label className="form-label">Código de Sello Graphite</label>
-                      <input 
-                        type="text" 
-                        className="form-input" 
-                        placeholder="Ej: GRA-T502-30" 
-                        value={nuevoRepuesto.codigoEquivalente}
-                        onChange={(e) => setNuevoRepuesto({ ...nuevoRepuesto, codigoEquivalente: e.target.value })}
-                      />
-                    </div>
-
-                    <div className="form-group" style={{ marginBottom: '16px' }}>
-                      <label className="form-label">Equivalencia Competidores</label>
-                      <input 
-                        type="text" 
-                        className="form-input" 
-                        placeholder="Ej: John Crane Type 502 / Burgmann MG1"
-                        value={nuevoRepuesto.equivalenteCompetidor}
-                        onChange={(e) => setNuevoRepuesto({ ...nuevoRepuesto, equivalenteCompetidor: e.target.value })}
-                      />
-                    </div>
-
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
-                      <div className="form-group">
-                        <label className="form-label">Marca de Bomba</label>
-                        <select 
-                          className="form-select"
-                          value={nuevoRepuesto.marcaBombaCompatible}
-                          onChange={(e) => setNuevoRepuesto({ ...nuevoRepuesto, marcaBombaCompatible: e.target.value })}
-                        >
-                          {MARCAS_BOMBA.map(m => <option key={m} value={m}>{m}</option>)}
-                        </select>
-                      </div>
-
-                      <div className="form-group">
-                        <label className="form-label">Modelo de Bomba</label>
-                        <input 
-                          type="text" 
-                          className="form-input" 
-                          placeholder="Ej: CR 15-03"
-                          value={nuevoRepuesto.modeloBombaCompatible}
-                          onChange={(e) => setNuevoRepuesto({ ...nuevoRepuesto, modeloBombaCompatible: e.target.value })}
-                        />
-                      </div>
-                    </div>
-
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px', marginBottom: '20px' }}>
-                      <div className="form-group">
-                        <label className="form-label">Diámetro Eje (mm)</label>
-                        <input 
-                          type="text" 
-                          className="form-input" 
-                          placeholder="Ej: 30 mm"
-                          value={nuevoRepuesto.diametroEje}
-                          onChange={(e) => setNuevoRepuesto({ ...nuevoRepuesto, diametroEje: e.target.value })}
-                        />
-                      </div>
-
-                      <div className="form-group">
-                        <label className="form-label">Presión Máxima</label>
-                        <input 
-                          type="text" 
-                          className="form-input" 
-                          placeholder="Ej: 16 bar"
-                          value={nuevoRepuesto.presionMax}
-                          onChange={(e) => setNuevoRepuesto({ ...nuevoRepuesto, presionMax: e.target.value })}
-                        />
-                      </div>
-
-                      <div className="form-group">
-                        <label className="form-label">Temperatura</label>
-                        <input 
-                          type="text" 
-                          className="form-input" 
-                          placeholder="Ej: -20°C a +180°C"
-                          value={nuevoRepuesto.temperaturaMax}
-                          onChange={(e) => setNuevoRepuesto({ ...nuevoRepuesto, temperaturaMax: e.target.value })}
-                        />
-                      </div>
-                    </div>
-
-                    <button type="submit" className="btn btn-primary full-width" style={{ padding: '14px' }}>
-                      ➕ Cargar Sello al Catálogo Oficial
-                    </button>
-                  </form>
-                )}
-
                 {empresaSubTab === 'metricas' && userIdentity?.role === 'admin' && (
                   <div>
                     <h3 style={{ fontSize: '18px', fontWeight: 800, marginBottom: '8px' }}>
@@ -1609,7 +1394,7 @@ export default function App() {
 
                       <div className="stat-box" style={{ textAlign: 'left', padding: '18px', backgroundColor: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '8px' }}>
                         <div style={{ fontSize: '11px', textTransform: 'uppercase', color: '#64748B', fontWeight: 700 }}>Catálogo en Base de Datos</div>
-                        <div style={{ fontSize: '26px', fontWeight: 800, color: '#0F172A', margin: '4px 0' }}>{catalogoLocal.length} sellos</div>
+                        <div style={{ fontSize: '26px', fontWeight: 800, color: '#0F172A', margin: '4px 0' }}>{new Set(catalogo.map(f => f.codigo_sello)).size} sellos</div>
                         <div style={{ fontSize: '12px', color: '#64748B' }}>Modelos y equivalencias verificadas</div>
                       </div>
                     </div>
