@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import Navbar from './components/Navbar';
 import BuscadorForm from './components/BuscadorForm';
 import Footer from './components/Footer';
+import CargaExcel from './components/CargaExcel';
 import { supabase, AUTH_CALLBACK_URL } from './supabase';
 import { SELLOS_REPUESSTOS, MARCAS_BOMBA, MODELOS_BOMBA, MARCAS_SELLO_COMPETIDOR, TIPOS_FLUIDO, MOCK_LEADS_CONSULTAS } from './data/mockData';
 import './styles/design-system.css';
@@ -1484,6 +1485,8 @@ export default function App() {
                     </div>
                   </div>
                 )}
+
+                {empresaSubTab === 'carga' && <CargaExcel />}
 
                 {empresaSubTab === 'carga' && (
                   <form onSubmit={handleAgregarRepuesto} style={{ maxWidth: '680px' }}>
