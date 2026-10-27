@@ -3,6 +3,7 @@ import Navbar from './components/Navbar';
 import BuscadorForm, { CamposBusqueda } from './components/BuscadorForm';
 import Footer from './components/Footer';
 import CargaExcel from './components/CargaExcel';
+import CargaFotos from './components/CargaFotos';
 import { supabase, AUTH_CALLBACK_URL } from './supabase';
 import { MOCK_LEADS_CONSULTAS } from './data/mockData';
 import { cargarCatalogo, filtrarFilas, agruparPorSello, formatearEje } from './lib/catalogo';
@@ -1293,7 +1294,7 @@ export default function App() {
                     className={`tab-btn ${empresaSubTab === 'carga' ? 'active' : ''}`}
                     onClick={() => setEmpresaSubTab('carga')}
                   >
-                    ➕ Carga de Catálogo (Excel)
+                    ➕ Carga de Catálogo y Fotos
                   </button>
                   {userIdentity?.role === 'admin' && (
                     <button 
@@ -1363,6 +1364,8 @@ export default function App() {
                 )}
 
                 {empresaSubTab === 'carga' && <CargaExcel />}
+
+                {empresaSubTab === 'carga' && <CargaFotos />}
 
                 {empresaSubTab === 'metricas' && userIdentity?.role === 'admin' && (
                   <div>
