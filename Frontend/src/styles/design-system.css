@@ -563,26 +563,64 @@ body {
 }
 
 .card-image-box {
-  background-color: var(--color-bg-light);
-  height: 140px;
+  background-color: var(--color-bg-white);
+  height: 230px;
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
   border-bottom: 1px solid var(--color-border);
-  padding: 16px;
+  padding: 14px;
+  overflow: hidden;
 }
 
 .card-seal-img {
-  width: 80px;
-  height: 80px;
+  width: 100%;
+  height: 100%;
   object-fit: contain;
+  transition: transform 0.3s ease;
+}
+
+.card-product:hover .card-seal-img {
+  transform: scale(1.05);
+}
+
+/* Sello sin foto cargada: logo chico y tenue en lugar de una imagen estirada */
+.card-seal-img.is-generica {
+  width: 72px;
+  height: 72px;
+  opacity: 0.55;
+}
+
+.badge-plano {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  background-color: var(--color-bg-white);
+  color: var(--color-text-main);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 9px;
+}
+
+.pill-fluido {
+  display: inline-block;
+  background-color: var(--color-bg-white);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  padding: 2px 8px;
+  margin: 2px 0 2px 4px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--color-text-main);
 }
 
 .badge-verified {
   position: absolute;
   top: 10px;
-  right: 10px;
+  left: 10px;
   background-color: var(--color-success-bg);
   color: var(--color-success);
   font-size: 11px;
@@ -652,7 +690,7 @@ body {
 /* PÁGINA DEDICADA DE FICHA TÉCNICA DEL PRODUCTO (ALINEADA A PLANILLA TÉCNICA) */
 .product-detail-layout {
   display: grid;
-  grid-template-columns: 360px 1fr;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
   gap: 36px;
   background-color: var(--color-bg-white);
   border-radius: var(--radius-lg);
@@ -663,21 +701,138 @@ body {
 }
 
 .detail-img-card {
-  background-color: var(--color-bg-light);
+  background-color: var(--color-bg-white);
   border-radius: var(--radius-lg);
   border: 1px solid var(--color-border);
-  padding: 32px;
+  padding: 20px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   position: relative;
 }
 
+/* Visor de la ficha: foto o plano en grande */
+.detail-visor {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--color-bg-light);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.detail-visor.ampliable {
+  cursor: zoom-in;
+}
+
 .detail-large-img {
-  width: 220px;
-  height: 220px;
+  width: 100%;
+  height: 100%;
   object-fit: contain;
+  padding: 12px;
+}
+
+.detail-large-img.is-generica {
+  width: 140px;
+  height: 140px;
+  opacity: 0.55;
+}
+
+.detail-pdf {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background-color: var(--color-bg-white);
+}
+
+.detail-thumbs {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+  margin-top: 14px;
+}
+
+.detail-thumb {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background-color: var(--color-bg-white);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-text-main);
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.detail-thumb:hover,
+.detail-thumb.active {
+  border-color: var(--color-primary);
+}
+
+.detail-thumb img,
+.detail-thumb-icon {
+  width: 52px;
+  height: 52px;
+  object-fit: contain;
+  background-color: var(--color-bg-light);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.detail-visor-hint {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  margin-top: 10px;
+  text-align: center;
+}
+
+.detail-visor-hint a {
+  color: var(--color-primary);
+  font-weight: 700;
+}
+
+/* Imagen ampliada a pantalla completa */
+.visor-zoom {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  background-color: rgba(15, 23, 42, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  cursor: zoom-out;
+}
+
+.visor-zoom img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  background-color: var(--color-bg-white);
+  border-radius: 8px;
+}
+
+.visor-zoom-cerrar {
+  position: absolute;
+  top: 14px;
+  right: 18px;
+  background: none;
+  border: 0;
+  color: #FFFFFF;
+  font-size: 28px;
+  cursor: pointer;
 }
 
 .detail-main-content {
@@ -1250,6 +1405,17 @@ body {
     width: 180px;
     margin-left: 20px;
     border-radius: 6px !important;
+  }
+
+  .detail-visor {
+    aspect-ratio: auto !important;
+    background: none !important;
+  }
+
+  .detail-thumbs,
+  .detail-visor-hint,
+  .detail-pdf {
+    display: none !important;
   }
 
   .detail-large-img {

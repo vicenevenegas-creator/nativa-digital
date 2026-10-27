@@ -431,8 +431,20 @@ export default function App() {
     });
   };
 
+  // Visor de la ficha: qué se muestra en grande y si está ampliado a pantalla completa
+  const [vistaFicha, setVistaFicha] = useState('foto'); // 'foto' | 'plano'
+  const [zoomAbierto, setZoomAbierto] = useState(false);
+
+  useEffect(() => {
+    if (!zoomAbierto) return;
+    const cerrarConEsc = (e) => { if (e.key === 'Escape') setZoomAbierto(false); };
+    window.addEventListener('keydown', cerrarConEsc);
+    return () => window.removeEventListener('keydown', cerrarConEsc);
+  }, [zoomAbierto]);
+
   const handleVerDetalle = (sello) => {
     setSelloSeleccionado(sello);
+    setVistaFicha('foto');
     navegarA('detalle', 'resultados');
   };
 
@@ -735,7 +747,8 @@ export default function App() {
                           >
                             {isFav ? '❤️' : '🤍'}
                           </button>
-                          <img src={sello.imagen} alt={sello.codigoEquivalente} className="card-seal-img" />
+                          <img src={sello.imagen} alt={sello.nombre || sello.codigoEquivalente} className={`card-seal-img${sello.tieneFoto ? '' : ' is-generica'}`} loading="lazy" />
+                          {sello.plano && <span className="badge-plano">📐 Con plano</span>}
                         </div>
 
                         <div className="card-body">
@@ -747,11 +760,11 @@ export default function App() {
                           <div className="card-spec">
                             <div className="spec-item"><span className="spec-label">Bomba:</span><span className="spec-val">{sello.marcaBombaCompatible} - {sello.modeloBombaCompatible}</span></div>
                             <div className="spec-item"><span className="spec-label">Eje:</span><span className="spec-val">{sello.diametroEje}</span></div>
-                            <div className="spec-item"><span className="spec-label">Fluido:</span><span className="spec-val">{(sello.fluidosAptos || []).join(' · ')}</span></div>
+                            <div className="spec-item"><span className="spec-label">Fluido:</span><span className="spec-val">{(sello.fluidosAptos || []).map(f => <span key={f} className="pill-fluido">{f}</span>)}</span></div>
                           </div>
 
                           <div className="card-footer" style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: '8px' }}>
-                            <button className="btn btn-whatsapp full-width" onClick={(e) => { e.stopPropagation(); handleVerDetalle(sello); }}>
+                            <button className="btn btn-primary full-width" onClick={(e) => { e.stopPropagation(); handleVerDetalle(sello); }}>
                               🔍 Ver Ficha Técnica
                             </button>
                             <button 
@@ -951,22 +964,56 @@ export default function App() {
 
             <div className="product-detail-layout">
               <div className="detail-img-card">
-                <div className="badge-verified" style={{ top: '16px', right: '16px' }}>✓ Matcheo 100% Verificado</div>
-                <img src={selloSeleccionado.imagen} alt={selloSeleccionado.nombre} className="detail-large-img" />
-                {selloSeleccionado.plano && (
-                  <div style={{ marginTop: '16px', borderTop: '1px solid var(--color-border)', paddingTop: '12px' }}>
-                    <div className="spec-detail-title" style={{ marginBottom: '8px' }}>📐 Plano</div>
-                    {selloSeleccionado.planoEsPdf ? (
-                      <a href={selloSeleccionado.plano} target="_blank" rel="noreferrer" className="btn btn-secondary full-width">
-                        Abrir plano (PDF)
-                      </a>
-                    ) : (
-                      <a href={selloSeleccionado.plano} target="_blank" rel="noreferrer">
-                        <img src={selloSeleccionado.plano} alt={`Plano de ${selloSeleccionado.nombre}`} style={{ width: '100%', borderRadius: '8px' }} />
-                      </a>
-                    )}
-                  </div>
-                )}
+                <div className="badge-verified" style={{ top: '28px', left: '28px', zIndex: 1 }}>✓ Matcheo 100% Verificado</div>
+                {(() => {
+                  const s = selloSeleccionado;
+                  const verPlano = vistaFicha === 'plano' && s.plano;
+                  const urlVisor = verPlano ? s.plano : s.imagen;
+                  return (
+                    <>
+                      <div
+                        className={`detail-visor${(verPlano && !s.planoEsPdf) || (!verPlano && s.tieneFoto) ? ' ampliable' : ''}`}
+                        onClick={() => ((verPlano && !s.planoEsPdf) || (!verPlano && s.tieneFoto)) && setZoomAbierto(true)}
+                      >
+                        {verPlano && s.planoEsPdf ? (
+                          <iframe src={s.plano} title={`Plano de ${s.nombre}`} className="detail-pdf" />
+                        ) : (
+                          <img
+                            src={urlVisor}
+                            alt={verPlano ? `Plano de ${s.nombre}` : s.nombre}
+                            className={`detail-large-img${!verPlano && !s.tieneFoto ? ' is-generica' : ''}`}
+                          />
+                        )}
+                      </div>
+
+                      {s.plano && (
+                        <div className="detail-thumbs">
+                          <button type="button" className={`detail-thumb ${!verPlano ? 'active' : ''}`} onClick={() => setVistaFicha('foto')}>
+                            <img src={s.imagen} alt="" />
+                            Foto
+                          </button>
+                          <button type="button" className={`detail-thumb ${verPlano ? 'active' : ''}`} onClick={() => setVistaFicha('plano')}>
+                            {s.planoEsPdf ? <span className="detail-thumb-icon">📐</span> : <img src={s.plano} alt="" />}
+                            Plano
+                          </button>
+                        </div>
+                      )}
+
+                      <p className="detail-visor-hint">
+                        {verPlano && s.planoEsPdf ? (
+                          <a href={s.plano} target="_blank" rel="noreferrer">Abrir el plano en una pestaña nueva ↗</a>
+                        ) : s.tieneFoto || verPlano ? 'Tocá la imagen para verla en pantalla completa' : 'Foto del producto próximamente'}
+                      </p>
+
+                      {zoomAbierto && (
+                        <div className="visor-zoom" onClick={() => setZoomAbierto(false)}>
+                          <button type="button" className="visor-zoom-cerrar" aria-label="Cerrar">✕</button>
+                          <img src={urlVisor} alt={verPlano ? `Plano de ${s.nombre}` : s.nombre} />
+                        </div>
+                      )}
+                    </>
+                  );
+                })()}
               </div>
 
               <div className="detail-main-content">
@@ -1104,7 +1151,8 @@ export default function App() {
                         >
                           ❤️
                         </button>
-                        <img src={sello.imagen} alt={sello.codigoEquivalente} className="card-seal-img" />
+                        <img src={sello.imagen} alt={sello.nombre || sello.codigoEquivalente} className={`card-seal-img${sello.tieneFoto ? '' : ' is-generica'}`} loading="lazy" />
+                          {sello.plano && <span className="badge-plano">📐 Con plano</span>}
                       </div>
 
                       <div className="card-body">
@@ -1116,7 +1164,7 @@ export default function App() {
                         <div className="card-spec">
                           <div className="spec-item"><span className="spec-label">Bomba:</span><span className="spec-val">{sello.marcaBombaCompatible} - {sello.modeloBombaCompatible}</span></div>
                           <div className="spec-item"><span className="spec-label">Eje:</span><span className="spec-val">{sello.diametroEje}</span></div>
-                          <div className="spec-item"><span className="spec-label">Fluido:</span><span className="spec-val">{(sello.fluidosAptos || []).join(' · ')}</span></div>
+                          <div className="spec-item"><span className="spec-label">Fluido:</span><span className="spec-val">{(sello.fluidosAptos || []).map(f => <span key={f} className="pill-fluido">{f}</span>)}</span></div>
                         </div>
 
                         <div className="card-footer" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
