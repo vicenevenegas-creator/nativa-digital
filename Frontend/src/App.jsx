@@ -7,6 +7,7 @@ import CargaFotos from './components/CargaFotos';
 import { supabase, AUTH_CALLBACK_URL } from './supabase';
 import { MOCK_LEADS_CONSULTAS } from './data/mockData';
 import { cargarCatalogo, filtrarFilas, agruparPorSello, formatearEje } from './lib/catalogo';
+import { registrarEvento, datosBusqueda, cargarMetricas } from './lib/metricas';
 import './styles/design-system.css';
 
 // Personal de Graphite: dominio exacto (con "@" delante, para que "x@otrographite.com.ar" no pase)
@@ -253,6 +254,14 @@ export default function App() {
 
   // Estado para el panel de empresa
   const [empresaSubTab, setEmpresaSubTab] = useState('leads'); // 'leads' | 'carga' | 'metricas'
+  const [metricas, setMetricas] = useState(null);
+  const [errorMetricas, setErrorMetricas] = useState('');
+
+  useEffect(() => {
+    if (empresaSubTab !== 'metricas') return;
+    setErrorMetricas('');
+    cargarMetricas().then(setMetricas).catch((err) => setErrorMetricas(err.message));
+  }, [empresaSubTab]);
   const [leadsList, setLeadsList] = useState(MOCK_LEADS_CONSULTAS);
 
   // Catálogo real (filas de compatibilidades con su sello) leído de Supabase
@@ -398,7 +407,9 @@ export default function App() {
   };
 
   const handleSearch = () => {
-    setResultados(agruparPorSello(filtrarFilas(catalogo, searchParams)));
+    const encontrados = agruparPorSello(filtrarFilas(catalogo, searchParams));
+    setResultados(encontrados);
+    registrarEvento('busqueda', { ...datosBusqueda(searchParams), resultados: encontrados.length });
     navegarA('resultados', 'resultados');
   };
 
@@ -450,6 +461,7 @@ export default function App() {
 
   const handleWhatsApp = (sello) => {
     registrarEnHistorial(sello, 'Cotizado por WhatsApp');
+    registrarEvento('whatsapp', { ...datosBusqueda(searchParams), codigo_sello: sello.codigo || sello.id });
     const msg = `Hola, estoy usando el buscador web y me gustaría recibir asesoramiento y cotización para el sello mecánico compatible con mi bomba (${sello.codigoEquivalente} para ${sello.marcaBombaCompatible} ${sello.modeloBombaCompatible}).`;
     window.open(`https://wa.me/5491138134174?text=${encodeURIComponent(msg)}`, '_blank');
   };
@@ -1372,16 +1384,46 @@ export default function App() {
                       Métricas
                     </h3>
                     <p style={{ color: 'var(--color-text-muted)', fontSize: '13px', marginBottom: '20px' }}>
-                      Indicadores de rendimiento comercial y operativo de Graphite Technologies en tiempo real.
+                      Uso real del cotizador, contado desde que se empezó a registrar.
                     </p>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', marginBottom: '24px', maxWidth: '640px' }}>
-                      <div className="stat-box" style={{ textAlign: 'left', padding: '18px', backgroundColor: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '8px' }}>
-                        <div style={{ fontSize: '11px', textTransform: 'uppercase', color: '#64748B', fontWeight: 700 }}>Autonomía del Cotizador</div>
-                        <div style={{ fontSize: '26px', fontWeight: 800, color: '#3B82F6', margin: '4px 0' }}>88.5%</div>
-                        <div style={{ fontSize: '12px', color: '#64748B' }}>Consultas resueltas sin recurrir a vendedor senior</div>
-                      </div>
+                    {errorMetricas && (
+                      <p style={{ color: '#991B1B', fontSize: '14px', marginBottom: '16px' }}>No se pudieron cargar las métricas: {errorMetricas}</p>
+                    )}
 
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', marginBottom: '24px' }}>
+                      {[
+                        {
+                          titulo: 'Consultas Efectivas',
+                          valor: metricas?.consultas_whatsapp,
+                          color: '#10B981',
+                          detalle: 'Encontraron su sello y tocaron «Cotizar por WhatsApp»'
+                        },
+                        {
+                          titulo: 'Usos del Cotizador',
+                          valor: metricas?.busquedas,
+                          color: '#3B82F6',
+                          detalle: metricas ? `Búsquedas realizadas (${metricas.busquedas_con_resultado} con sello encontrado)` : 'Búsquedas realizadas'
+                        },
+                        {
+                          titulo: 'Tasa de Efectividad',
+                          valor: metricas ? (metricas.busquedas ? `${Math.round((metricas.consultas_whatsapp / metricas.busquedas) * 100)}%` : '—') : undefined,
+                          color: '#D20A11',
+                          detalle: 'Consultas efectivas sobre usos del cotizador'
+                        },
+                        {
+                          titulo: 'Usuarios Registrados',
+                          valor: metricas?.usuarios_registrados,
+                          color: '#0F172A',
+                          detalle: metricas ? `${metricas.usuarios_activos} usaron el cotizador` : 'Cuentas creadas en la app'
+                        }
+                      ].map((m) => (
+                        <div key={m.titulo} className="stat-box" style={{ textAlign: 'left', padding: '18px', backgroundColor: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '8px' }}>
+                          <div style={{ fontSize: '11px', textTransform: 'uppercase', color: '#64748B', fontWeight: 700 }}>{m.titulo}</div>
+                          <div style={{ fontSize: '26px', fontWeight: 800, color: m.color, margin: '4px 0' }}>{m.valor ?? '…'}</div>
+                          <div style={{ fontSize: '12px', color: '#64748B' }}>{m.detalle}</div>
+                        </div>
+                      ))}
                       <div className="stat-box" style={{ textAlign: 'left', padding: '18px', backgroundColor: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '8px' }}>
                         <div style={{ fontSize: '11px', textTransform: 'uppercase', color: '#64748B', fontWeight: 700 }}>Catálogo en Base de Datos</div>
                         <div style={{ fontSize: '26px', fontWeight: 800, color: '#0F172A', margin: '4px 0' }}>{new Set(catalogo.map(f => f.codigo_sello)).size} sellos</div>

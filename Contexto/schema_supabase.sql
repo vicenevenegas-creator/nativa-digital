@@ -121,3 +121,51 @@ $function$;
 CREATE TRIGGER on_auth_user_created
  AFTER INSERT ON auth.users
  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
+-- 7. Eventos del cotizador: cada búsqueda y cada clic en «Cotizar por WhatsApp» sobre un sello
+create table public.eventos_cotizador (
+  id           uuid primary key default gen_random_uuid(),
+  fecha        timestamptz not null default now(),
+  tipo         text not null check (tipo in ('busqueda', 'whatsapp')),
+  usuario_id   uuid default auth.uid() references auth.users(id) on delete set null,
+  marca_bomba  text,
+  modelo_bomba text,
+  eje_mm       numeric(6,2),
+  fluido       text,
+  resultados   integer,          -- búsqueda: cuántos sellos encontró
+  codigo_sello text              -- whatsapp: qué sello se consultó
+);
+
+create index eventos_cotizador_tipo_fecha on public.eventos_cotizador (tipo, fecha);
+
+alter table public.eventos_cotizador enable row level security;
+
+create policy "Usuarios registran sus eventos" on public.eventos_cotizador
+  for insert to authenticated with check (usuario_id = auth.uid());
+create policy "Personal ve los eventos" on public.eventos_cotizador
+  for select to authenticated using (public.es_personal());
+
+-- 8. Resumen para la pestaña Métricas (solo personal @graphite.com.ar)
+create or replace function public.metricas_cotizador()
+returns json
+language plpgsql
+stable
+security definer
+set search_path = public
+as $$
+begin
+  if not public.es_personal() then
+    raise exception 'Solo el personal de Graphite puede ver las métricas';
+  end if;
+  return json_build_object(
+    'busquedas',               (select count(*) from public.eventos_cotizador where tipo = 'busqueda'),
+    'busquedas_con_resultado', (select count(*) from public.eventos_cotizador where tipo = 'busqueda' and resultados > 0),
+    'consultas_whatsapp',      (select count(*) from public.eventos_cotizador where tipo = 'whatsapp'),
+    'usuarios_activos',        (select count(distinct usuario_id) from public.eventos_cotizador),
+    'usuarios_registrados',    (select count(*) from auth.users)
+  );
+end;
+$$;
+
+revoke execute on function public.metricas_cotizador() from public, anon;
+grant execute on function public.metricas_cotizador() to authenticated;
