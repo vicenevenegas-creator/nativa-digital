@@ -43,7 +43,7 @@ export default function Navbar({ currentTab, setCurrentTab, userIdentity, onChan
                     className={`nav-link ${currentTab === 'favoritos' ? 'active' : ''}`}
                     onClick={(e) => { e.preventDefault(); setCurrentTab('favoritos'); }}
                   >
-                    ⭐ Favoritos {favoritosCount > 0 && <span className="badge-count" style={{ backgroundColor: '#D20A11', color: 'white', borderRadius: '10px', padding: '2px 7px', fontSize: '11px', marginLeft: '4px' }}>{favoritosCount}</span>}
+                    Favoritos {favoritosCount > 0 && <span className="badge-count" style={{ backgroundColor: '#D20A11', color: 'white', borderRadius: '10px', padding: '2px 7px', fontSize: '11px', marginLeft: '4px' }}>{favoritosCount}</span>}
                   </a>
                 </li>
                 <li>
@@ -52,7 +52,7 @@ export default function Navbar({ currentTab, setCurrentTab, userIdentity, onChan
                     className={`nav-link ${currentTab === 'mis-consultas' ? 'active' : ''}`}
                     onClick={(e) => { e.preventDefault(); setCurrentTab('mis-consultas'); }}
                   >
-                    📋 Cotizaciones WhatsApp
+                    Cotizaciones WhatsApp
                   </a>
                 </li>
               </>
@@ -64,7 +64,7 @@ export default function Navbar({ currentTab, setCurrentTab, userIdentity, onChan
                   className={`nav-link ${currentTab === 'empresa' ? 'active' : ''}`}
                   onClick={(e) => { e.preventDefault(); setCurrentTab('empresa'); }}
                 >
-                  {userIdentity.role === 'admin' ? '👑 Panel de Control Admin' : '🔒 Panel de Ventas CRM'}
+                  {userIdentity.role === 'admin' ? 'Panel de Control Admin' : 'Panel de Ventas CRM'}
                 </a>
               </li>
             )}
@@ -90,9 +90,9 @@ export default function Navbar({ currentTab, setCurrentTab, userIdentity, onChan
                 flexShrink: 0
               }}>
                 <span>
-                  {userIdentity.role === 'admin' && '👑 Admin: '}
-                  {userIdentity.role === 'vendedor' && '👔 Vendedor: '}
-                  {userIdentity.role === 'cliente' && '👤 '}
+                  {userIdentity.role === 'admin' && 'Admin: '}
+                  {userIdentity.role === 'vendedor' && 'Vendedor: '}
+                  {userIdentity.role === 'cliente' && ''}
                 </span>
                 <span>{userIdentity.name}</span>
               </span>
@@ -103,13 +103,13 @@ export default function Navbar({ currentTab, setCurrentTab, userIdentity, onChan
                 onClick={onChangeAccess} 
                 title="Cerrar sesión o cambiar de perfil"
               >
-                🚪 Cerrar Sesión
+                Cerrar Sesión
               </button>
             </div>
           ) : (
             !isAuthView && (
               <button className="btn btn-primary" style={{ whiteSpace: 'nowrap', flexShrink: 0 }} onClick={onChangeAccess}>
-                🔑 Iniciar Sesión / Registrarse
+                Iniciar Sesión / Registrarse
               </button>
             )
           )}

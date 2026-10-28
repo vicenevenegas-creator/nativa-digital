@@ -722,31 +722,6 @@ export default function App() {
                       <div key={sello.id} className="card-product" onClick={() => handleVerDetalle(sello)}>
                         <div className="card-image-box" style={{ position: 'relative' }}>
                           <div className="badge-verified">✓ Matcheo 100%</div>
-                          <button 
-                            type="button"
-                            className="btn-fav-toggle"
-                            onClick={(e) => toggleFavorito(sello, e)}
-                            title={isFav ? "Quitar de Favoritos" : "Marcar como Favorito"}
-                            style={{
-                              position: 'absolute',
-                              top: '8px',
-                              right: '8px',
-                              background: isFav ? '#FEF2F2' : 'rgba(255, 255, 255, 0.92)',
-                              border: isFav ? '1px solid #F87171' : '1px solid #CBD5E1',
-                              borderRadius: '50%',
-                              width: '32px',
-                              height: '32px',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              cursor: 'pointer',
-                              fontSize: '15px',
-                              zIndex: 10,
-                              boxShadow: '0 2px 6px rgba(0,0,0,0.1)'
-                            }}
-                          >
-                            {isFav ? '❤️' : '🤍'}
-                          </button>
                           <img src={sello.imagen} alt={sello.nombre || sello.codigoEquivalente} className={`card-seal-img${sello.tieneFoto ? '' : ' is-generica'}`} loading="lazy" />
                           {sello.plano && <span className="badge-plano">📐 Con plano</span>}
                         </div>
@@ -1127,30 +1102,6 @@ export default function App() {
                     <div key={sello.id} className="card-product" onClick={() => handleVerDetalle(sello)}>
                       <div className="card-image-box" style={{ position: 'relative' }}>
                         <div className="badge-verified">✓ Matcheo 100%</div>
-                        <button 
-                          type="button"
-                          className="btn-fav-toggle"
-                          onClick={(e) => toggleFavorito(sello, e)}
-                          title="Quitar de Favoritos"
-                          style={{
-                            position: 'absolute',
-                            top: '8px',
-                            right: '8px',
-                            background: '#FEF2F2',
-                            border: '1px solid #F87171',
-                            borderRadius: '50%',
-                            width: '32px',
-                            height: '32px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            cursor: 'pointer',
-                            fontSize: '15px',
-                            zIndex: 10
-                          }}
-                        >
-                          ❤️
-                        </button>
                         <img src={sello.imagen} alt={sello.nombre || sello.codigoEquivalente} className={`card-seal-img${sello.tieneFoto ? '' : ' is-generica'}`} loading="lazy" />
                           {sello.plano && <span className="badge-plano">📐 Con plano</span>}
                       </div>
@@ -1315,7 +1266,7 @@ export default function App() {
                 <div className="empresa-header">
                   <div>
                     <h2 style={{ fontSize: '24px', fontWeight: 800 }}>
-                      {userIdentity?.role === 'admin' ? '👑 Panel de Control & Administración General' : '💼 Panel Interno de Gestión de Ventas & Catálogo'}
+                      {userIdentity?.role === 'admin' ? 'Panel de Control & Administración General' : 'Panel Interno de Gestión de Ventas & Catálogo'}
                     </h2>
                     <p style={{ color: 'var(--color-text-muted)', fontSize: '14px' }}>
                       Sesión activa: <strong>{userIdentity?.email}</strong> ({userIdentity?.name || 'Personal Autorizado'})
@@ -1326,7 +1277,7 @@ export default function App() {
                     color: userIdentity?.role === 'admin' ? '#FEF2F2' : '#38BDF8',
                     border: userIdentity?.role === 'admin' ? '1px solid #DC2626' : '1px solid #334155'
                   }}>
-                    {userIdentity?.role === 'admin' ? '👑 Administrador General' : '👔 Cotizador / Vendedor'}
+                    {userIdentity?.role === 'admin' ? 'Administrador General' : 'Cotizador / Vendedor'}
                   </span>
                 </div>
 
@@ -1336,20 +1287,20 @@ export default function App() {
                     className={`tab-btn ${empresaSubTab === 'leads' ? 'active' : ''}`}
                     onClick={() => setEmpresaSubTab('leads')}
                   >
-                    📥 Consultas & Cotizaciones Web ({leadsList.length})
+                    Consultas & Cotizaciones Web ({leadsList.length})
                   </button>
                   <button 
                     className={`tab-btn ${empresaSubTab === 'carga' ? 'active' : ''}`}
                     onClick={() => setEmpresaSubTab('carga')}
                   >
-                    ➕ Carga de Catálogo y Fotos
+                    Carga de Catálogo y Fotos
                   </button>
                   {userIdentity?.role === 'admin' && (
                     <button 
                       className={`tab-btn ${empresaSubTab === 'metricas' ? 'active' : ''}`}
                       onClick={() => setEmpresaSubTab('metricas')}
                     >
-                      📊 Métricas del MVP (Lean Canvas)
+                      Métricas
                     </button>
                   )}
                 </div>
@@ -1393,7 +1344,7 @@ export default function App() {
                                   style={{ padding: '6px 12px', fontSize: '12px' }}
                                   onClick={() => alert(`Abriendo WhatsApp con ${lead.cliente} al ${lead.telefono}`)}
                                 >
-                                  💬 Responder
+                                  Responder
                                 </button>
                                 <button 
                                   className="btn btn-secondary" 
@@ -1418,19 +1369,13 @@ export default function App() {
                 {empresaSubTab === 'metricas' && userIdentity?.role === 'admin' && (
                   <div>
                     <h3 style={{ fontSize: '18px', fontWeight: 800, marginBottom: '8px' }}>
-                      Métricas Clave del MVP (Validación Lean Canvas)
+                      Métricas
                     </h3>
                     <p style={{ color: 'var(--color-text-muted)', fontSize: '13px', marginBottom: '20px' }}>
                       Indicadores de rendimiento comercial y operativo de Graphite Technologies en tiempo real.
                     </p>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', marginBottom: '24px' }}>
-                      <div className="stat-box" style={{ textAlign: 'left', padding: '18px', backgroundColor: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '8px' }}>
-                        <div style={{ fontSize: '11px', textTransform: 'uppercase', color: '#64748B', fontWeight: 700 }}>Tiempo Promedio de Respuesta</div>
-                        <div style={{ fontSize: '26px', fontWeight: 800, color: '#10B981', margin: '4px 0' }}>3.2 min</div>
-                        <div style={{ fontSize: '12px', color: '#64748B' }}>Meta: &lt; 5 min (antes &gt; 60 min)</div>
-                      </div>
-
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', marginBottom: '24px', maxWidth: '640px' }}>
                       <div className="stat-box" style={{ textAlign: 'left', padding: '18px', backgroundColor: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '8px' }}>
                         <div style={{ fontSize: '11px', textTransform: 'uppercase', color: '#64748B', fontWeight: 700 }}>Autonomía del Cotizador</div>
                         <div style={{ fontSize: '26px', fontWeight: 800, color: '#3B82F6', margin: '4px 0' }}>88.5%</div>
@@ -1438,24 +1383,12 @@ export default function App() {
                       </div>
 
                       <div className="stat-box" style={{ textAlign: 'left', padding: '18px', backgroundColor: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '8px' }}>
-                        <div style={{ fontSize: '11px', textTransform: 'uppercase', color: '#64748B', fontWeight: 700 }}>Horas Ahorradas / Semana</div>
-                        <div style={{ fontSize: '26px', fontWeight: 800, color: '#D20A11', margin: '4px 0' }}>38 hs</div>
-                        <div style={{ fontSize: '12px', color: '#64748B' }}>Impacto acumulado en el equipo comercial</div>
-                      </div>
-
-                      <div className="stat-box" style={{ textAlign: 'left', padding: '18px', backgroundColor: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '8px' }}>
                         <div style={{ fontSize: '11px', textTransform: 'uppercase', color: '#64748B', fontWeight: 700 }}>Catálogo en Base de Datos</div>
                         <div style={{ fontSize: '26px', fontWeight: 800, color: '#0F172A', margin: '4px 0' }}>{new Set(catalogo.map(f => f.codigo_sello)).size} sellos</div>
-                        <div style={{ fontSize: '12px', color: '#64748B' }}>Modelos y equivalencias verificadas</div>
+                        <div style={{ fontSize: '12px', color: '#64748B' }}>{catalogo.length} compatibilidades de bombas cargadas</div>
                       </div>
                     </div>
 
-                    <div style={{ backgroundColor: '#FEF2F2', border: '1px solid #FECACA', borderRadius: '8px', padding: '16px' }}>
-                      <strong style={{ color: '#991B1B', fontSize: '14px' }}>👑 Control de Administración Exclusivo:</strong>
-                      <p style={{ fontSize: '13px', color: '#7F1D1D', marginTop: '4px', lineHeight: 1.5 }}>
-                        Conectado como <strong>{userIdentity?.email}</strong>. Podés gestionar nuevos cotizadores, autorizar altas de catálogo masivas y exportar el informe de cotizaciones para el ERP interno.
-                      </p>
-                    </div>
                   </div>
                 )}
               </div>

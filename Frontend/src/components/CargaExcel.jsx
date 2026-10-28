@@ -154,7 +154,7 @@ export default function CargaExcel() {
         onClick={handleSubir}
         disabled={estado !== 'listo'}
       >
-        {estado === 'subiendo' ? 'Subiendo…' : '⬆️ Subir sellos y compatibilidades a la base'}
+        {estado === 'subiendo' ? 'Subiendo…' : 'Subir sellos y compatibilidades a la base'}
       </button>
     </div>
   );

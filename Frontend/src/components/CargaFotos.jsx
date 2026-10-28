@@ -117,7 +117,7 @@ export default function CargaFotos() {
       <td style={{ whiteSpace: 'nowrap' }}>
         {url ? (
           /\.pdf$/i.test(ruta) ? (
-            <a href={url} target="_blank" rel="noreferrer" style={{ marginRight: '8px' }}>📄 PDF</a>
+            <a href={url} target="_blank" rel="noreferrer" style={{ marginRight: '8px' }}>PDF</a>
           ) : (
             <a href={url} target="_blank" rel="noreferrer">
               <img src={url} alt={`${TIPOS[tipo].etiqueta} de ${sello.codigo}`} style={{ width: '44px', height: '44px', objectFit: 'cover', borderRadius: '6px', verticalAlign: 'middle', marginRight: '8px', border: '1px solid var(--color-border)' }} />
