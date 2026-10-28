@@ -142,6 +142,15 @@
   /* Slide de demo */
   .slide.red-bg { background: var(--red); align-items: center; justify-content: center; padding: 0; overflow: hidden; }
   .demo-word { color: #fff; font-size: clamp(96px, 26vw, 420px); font-weight: 800; letter-spacing: -.04em; line-height: 1; }
+  .slide.red-bg { flex-direction: column; gap: clamp(16px, 4vh, 40px); }
+  .demo-btn {
+    display: inline-block; background: #fff; color: #d20a11; text-decoration: none;
+    font-size: clamp(18px, 2vw, 28px); font-weight: 700;
+    padding: clamp(14px, 1.6vw, 20px) clamp(28px, 3vw, 44px); border-radius: 999px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, .2); transition: transform .2s, box-shadow .2s;
+  }
+  .demo-btn:hover { transform: translateY(-2px); box-shadow: 0 14px 36px rgba(0, 0, 0, .28); }
+  .demo-btn:focus-visible { outline: 3px solid #fff; outline-offset: 4px; }
   body.on-red .progress { background: rgba(255, 255, 255, .25); }
   body.on-red .progress span, body.on-red .dot.on { background: #fff; }
   body.on-red .dot { background: rgba(255, 255, 255, .4); }
@@ -353,6 +362,7 @@
   <!-- 5 · Demo -->
   <section class="slide red-bg" aria-label="Demo">
     <h2 class="demo-word r" style="--i:0">DEMO</h2>
+    <a class="demo-btn r" style="--i:1" href="https://nativa-digital-five.vercel.app/#resultados" target="_blank" rel="noopener">Abrir el buscador &#8594;</a>
   </section>
 
   <!-- 6 · Resumen -->
